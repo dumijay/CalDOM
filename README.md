@@ -5,6 +5,7 @@ It's simply a chainable wrapper around document.querySelectorAll().
 ## Good God! Another jQuery-like framework?
 I know :)
 
+
 About a few years ago, I was creating animated web stuff (banners, games, etc.). The kind of animations more into programming than just moving parts.
 
 * I needed a lightweight jQuery, specially to fit Google Display Network(GDN)'s 150kb file size limit. jQuery was about 70kb-ish back then.
