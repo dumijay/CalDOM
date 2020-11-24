@@ -7,18 +7,21 @@ I know :)
 
 About a few years ago, I was creating animated web stuff (banners, games, etc.). The kind of animations more into programming than just moving parts.
 
-* I needed a lightweight jQuery, specially to fit Google Display Network(GDN)'s 150kb file size limit. jQuery was about 70kb-ish back then.
+* I needed a lightweight jQuery replacement. Specially to fit Google Display Network(GDN)'s 150kb file size limit. jQuery was about 70kb-ish back then.
 * Plus, I needed to stay up to date with DOM/javascript vanilla syntax. (Because jQuery moves you away from it).
 
 Hence, CalDOM was born. 8KB uncompressed, with most of the functionality I need without an overkill.
 I created this years ago and kept improving it as my primary DOM handler. Just decided to put it out thinking someone else might find it useful.
 
-If you have similar requirements & need something light closer to vanilla JS, this could be useful. Otherwise, I think you're better off with jQuery-alike.
-(Come to think of it, my old very unpopular decision to stay closer to vanilla javascript paid-back big time.)
+If you have similar requirements & need something lighter closer to vanilla JS/DOM/HTML/CSS, this could be useful. Otherwise, I think you're better off with jQuery-alike.  
+
+Come to think of it, my very unpopular decision to stay closer to vanilla javascript against tempting fancy-frameworks paid-back big time later. Drastically reduced the learning-curve for other languages and environments like NodeJS.
+
+## Example: A Simple TODO list
 
 I'm using the alias _ (underscore) for easy reference. This can be set to $ or any variable-name.
 
-## Example: A Simple TODO list
+![To Do App Screenshot](./_etc/todo_app_screenshot.png)
 
 ```html
 <style>
