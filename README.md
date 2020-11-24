@@ -19,7 +19,7 @@ If you have similar requirements & need something light closer to vanilla JS, th
 
 I'm using the alias _ (underscore) for easy reference. This can be set to $ or any variable-name.
 
-## Example: A Simple todo list
+## Example: A Simple TODO list
 
 ```html
 <style>
