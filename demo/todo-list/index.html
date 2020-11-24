@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CalDom Simple TODO List App</title>
+
+    <style>
+        .error{
+            box-shadow: 0 0 5px red;
+        }
+    
+        .todo-item{
+            cursor: pointer;
+            font-size: 1.5em;
+        }
+    </style>
+
+</head>
+<body>
+    <script src="../../0.5.0/cal_dom_0.5.0.js"></script>
+    <script>
+    
+        _("body")
+            .append(
+                _input = _("+input")
+                    .attr({
+                        type: "text",
+                        placeholder: "Type item here",
+                    }),
+                
+                _button = _("+button").text("Add")
+                    .css({
+                        cursor: "pointer",
+                        marginLeft: "0.5em",
+                    })
+                    .on("click", () => {
+                        var value = _input.elems[0].value;
+    
+                        if( !value.length ) return _input.addClass("error");
+                        else _input.removeClass("error");
+    
+                        _("#todo-list")
+                            .append(
+                                _("+li").attr("class", "todo-item").text( value )
+                                    .on("click", (e) => {
+                                        _(e.target).css("text-decoration", "line-through")
+                                    })
+                            );
+                    }),
+                
+                _("+ol").attr("id", "todo-list"),
+                
+                _("+button").text("Clear")
+                    .on("click", (e) => {
+                        _(".todo-item").remove();
+                    })
+            );
+    
+    </script>
+</body>
+</html>

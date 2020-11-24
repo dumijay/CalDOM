@@ -1,14 +1,5 @@
-//CodeArtLove (Pvt) Limited - All Rights Reserved.
-
 //0.5.0		Major release with support for 
 //			undefined DOM functions and properties through Proxy & Reflection (Unfinished).
-
-//Added text() to avoid XSS vulnerabilities, to be added to previous versions as well
-
-//0.4.12 BREAKING CHANGE: val(), data(), attr() and html() returning an array of all elements instead of first element.
-//0.4.12 addClass() and removeClass() now supports multiple classes separated by space.
-//0.4.12 changed CalDom to CalDom
-//0.4.12 added version()
 
 (function(){
 
