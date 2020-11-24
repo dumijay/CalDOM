@@ -19,9 +19,9 @@ Come to think of it, my very unpopular decision to stay closer to vanilla javasc
 
 ## Example: A Simple TODO list
 
-I'm using the alias _ (underscore) for easy reference. This can be set to $ or any variable-name.
-
 ![To Do App Screenshot](./_etc/todo_app_screenshot.png)
+
+Using the alias _ (underscore) for easy reference. This can be set to $ or any variable-name.
 
 ```html
 <style>
