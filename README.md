@@ -1,10 +1,9 @@
 # CalDom
-CalDom is a chainable DOM traverser and a modifier. A lightweight, vanilla-DOM-syntax alternative to jQuery.  
+CalDom is a chainable DOM traverser and a modifier. A lightweight, closer-vanilla-DOM-syntax alternative to jQuery.  
 It's simply a chainable wrapper around document.querySelectorAll().
 
 ## Good God! Another jQuery-like framework?
 I know :)
-
 
 About a few years ago, I was creating animated web stuff (banners, games, etc.). The kind of animations more into programming than just moving parts.
 
