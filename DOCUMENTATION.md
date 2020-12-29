@@ -35,7 +35,7 @@ var container = _(container_node);
 var bodyChildren = _(document.body.childNodes);
 ```
 
-Returns **[CalDom][67]** Returns a chainable CalDom instance
+Returns **[CalDom][67]** a chainable CalDom instance
 <br/>
 ___
 <br/>
@@ -223,7 +223,7 @@ _("#container-one").append( function(parent_node, parent_index){
 });
 ```
 
-Returns **[CalDom][67]** Returns this chainable CalDom instance
+Returns **[CalDom][67]** this chainable CalDom instance
 <br/>
 ___
 <br/>
@@ -260,7 +260,7 @@ _("#container-one").append( function(parent_index, parent_node){
 });
 ```
 
-Returns **[CalDom][67]** Returns this chainable CalDom instance
+Returns **[CalDom][67]** this chainable CalDom instance
 <br/>
 ___
 <br/>
@@ -276,7 +276,7 @@ _("p").remove();
 
 Remove all elements of this CalDom instance from the DOM.
 
-Returns **[CalDom][67]** Returns this empty chainable CalDom instance
+Returns **[CalDom][67]** this empty chainable CalDom instance
 <br/>
 ___
 <br/>
@@ -425,7 +425,7 @@ _("#div-id").css({
 });
 ```
 
-Returns **[CalDom][67]** Returns this chainable CalDom instance
+Returns **[CalDom][67]** this chainable CalDom instance
 <br/>
 ___
 <br/>
@@ -449,7 +449,7 @@ _("#container").addClass("wide-view");
 _("#container").addClass("visible dark-theme narrow");
 ```
 
-Returns **[CalDom][67]** Returns this chainable CalDom instance
+Returns **[CalDom][67]** this chainable CalDom instance
 <br/>
 ___
 <br/>
@@ -472,7 +472,7 @@ _("#container").removeClass("visible");
 _("#container").removeClass("dark-theme narrow");
 ```
 
-Returns **[CalDom][67]** Returns this chainable CalDom instance
+Returns **[CalDom][67]** this chainable CalDom instance
 <br/>
 ___
 <br/>
@@ -501,7 +501,7 @@ _("div-id").on("click", (e) => { console.log("clicked") });
 _("div-id").on("mousemove touchmove", moveHandler);
 ```
 
-Returns **[CalDom][67]** Returns this chainable CalDom instance
+Returns **[CalDom][67]** this chainable CalDom instance
 <br/>
 ___
 <br/>
@@ -528,7 +528,7 @@ _("div-id").off("click", clickEventHandler);
 _("div-id").off("mousemove touchmove", moveHandler);
 ```
 
-Returns **[CalDom][67]** Returns this chainable CalDom instance
+Returns **[CalDom][67]** this chainable CalDom instance
 <br/>
 ___
 <br/>
@@ -554,7 +554,7 @@ var fifth_para = _("p").eq(4);
 var second_last_para = _("p").eq(-2);
 ```
 
-Returns **[CalDom][67]** Returns a new CalDom instance with the i-th element
+Returns **[CalDom][67]** a new CalDom instance with the i-th element
 <br/>
 ___
 <br/>
@@ -583,7 +583,7 @@ var img_parents = _("img").parent(".container");
 -   Throws **[TypeError][71]** Throws if Element.matches() is not supported in the browser. Use the pollyfill at [https://developer.mozilla.org/en-US/docs/Web/API/Element/matches][72]
     (If this CalDom instance has more than 1 element. Parents of all of them are included.)
 
-Returns **[CalDom][67]** Returns a new CalDom instance with matched parents. Multiple parents will be returned if there are 2 or more elements in the current CalDom instance.
+Returns **[CalDom][67]** a new CalDom instance with matched parents. Multiple parents will be returned if there are 2 or more elements in the current CalDom instance.
 <br/>
 ___
 <br/>
@@ -606,7 +606,7 @@ var container_children = _("#container-id").children();
 var checked_elements = _("#form-id").children(":checked");
 ```
 
-Returns **[CalDom][67]** Returns a chainable new CalDom instance with children
+Returns **[CalDom][67]** a chainable new CalDom instance with children
 <br/>
 ___
 <br/>
@@ -628,7 +628,7 @@ _("img.slide").each( function(elem, i){
 });
 ```
 
-Returns **[CalDom][67]** Returns current chainable CalDom instance
+Returns **[CalDom][67]** current chainable CalDom instance
 <br/>
 ___
 <br/>
