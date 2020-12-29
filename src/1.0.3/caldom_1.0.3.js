@@ -1,7 +1,9 @@
-//1.0.0 Initial public release
+// CalDom 1.0.3 - Initial public release
+// Copyright (c) 2020 Dumi Jay
+// Released under the MIT license - https://github.com/dumijay/CalDom/
 
-//Uncomment below line and return statement at the end to support ES6 export/import.
-// export default 
+//Uncomment below line to support ES6 module import/export.
+//export default 
 (function(){
 /**
  * @private
