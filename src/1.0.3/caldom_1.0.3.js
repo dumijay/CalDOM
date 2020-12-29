@@ -22,10 +22,10 @@ function getFinalDestination(start, paths){
 }
 
 /**
- * Get an array of created new element or found elements by a CSS Selector or an XPath Query. This can be directly accessed using _.q() without initiating a new CalDom instance.
+ * Call CalDom's query function directly using _.q()
  * @param {String} query "+html_tag" creates a new element. Otherwise it can be a CSS Selector or an XPath query starting with "$"
  * @param {Node} [parent_node] Treated as the parent node for CSS selector or XPath query. Otherwise, default to window.document
- * @returns {Array} Array with new created element or NodeList returned by the CSS selector or the XPath query
+ * @returns {Array} Array with the new element or NodeList returned by the CSS selector or the XPath query
  * (Shorten for query())
  * @example
  * 
@@ -361,7 +361,7 @@ CalDom.prototype = {
 	 * @param {String|Object} key_path_or_path_array_or_key_values Variable name as a String or { key: value, ...} Object to set multiple variables. To access n-th level variables, use "." Eg: "attributes.type.value"
 	 * @param {any|Array} [val_or_val_array] (Optional) Value or an array of values to be to be assigned at the corresponding n-th element. If empty, an array of requested variable's values is returned.
 	 * @returns {CalDom|Array} If it's a set request, this chainable CalDom instance is returned. Otherwise, a value array from all elements in this CalDom instance is returned.
-	 * 
+	 * Warning: Look out for untracked circular references that might lead to memory leaks.
 	 * @example 
 	 * //Get custom data
 	 * var custom_data_array = _(".class-name").prop("customData");
@@ -385,9 +385,6 @@ CalDom.prototype = {
 	 * 		custom_data: 44,
 	 * 		myDocument: window.document
 	 * })
-	 * 
-	 * Alias data() == prop() To be compatible with previous versions and for drop-in jQuery compatibility
-	 * Warning: Look out for untracked circular references that might leads to memory leaks.
 	 */
 	prop: function(key_path_or_path_array_or_key_values, val_or_val_array){
 		
@@ -464,8 +461,6 @@ CalDom.prototype = {
 
 	/**
 	 * Alias for prop() to keep compatibility with old versions and for drop-in jQuery compatibility
-	 * @see prop()
-	 * @deprecated
 	 */
 	data: function(){
 		return this.prop.apply(this, arguments);
@@ -508,7 +503,7 @@ CalDom.prototype = {
 	/**
 	 * Get or set attribute(s) of elements in this CalDom instance.
 	 * @param {String|Object} key_or_key_values Attribute name as a String or { key: value, ...} object to set multiple attributes
-	 * @param {any|Array} [val_or_val_array] (Optional) Value or array of values to to be assigned at corresponding n-th element. If empty, array of attribute values will be returned.
+	 * @param {any|Array} [val_or_val_array] (Optional) Value or array of values to be assigned at corresponding n-th element. If empty, array of attribute values will be returned.
 	 * @returns {CalDom|Array} If it's a set request, this CalDom instance is returned for chaining. Otherwise, a attribute value array from all elements in this CalDom instance is returned.
 	 * @example 
 	 * //Set scrolling attribute of all iframes
@@ -747,7 +742,7 @@ CalDom.prototype = {
 	/**
 	 * Prepend/Move elements to the first element of this CalDom instance or prepend to all the elements by passing a generator function. This is a wrapper around elem.insertBefore()
 	 * @param {Node|CalDom|Array|NodeList|HTMLCollection|Function} element_or_elements_or_caldom_or_generator First argument can be a CalDom instance, a Node or an array of Nodes or a generator function that returns a new Element. 
-	 * Items are prepend to the first element of this CalDom instance. Generated item is prepends to all elements in this CalDom instance. 
+	 * Items are prepended to the first element of this CalDom instance. Generated item is prepended to all elements in this CalDom instance. 
 	 * Generator receives corresponding parent_node and parent_index as arguments.
 	 * @param {Node|CalDom} [before_elem_or_caldom] (Optional) If provided, items are inserted before this element instead before the firstChild.
 	 * @description Null and undefined inputs are silently ignored. Note that if you prepend an existing element, it is moved to the new destination (not cloning).
@@ -778,6 +773,10 @@ CalDom.prototype = {
 	/**
 	 * Remove all elements of this CalDom instance from the DOM.
 	 * @returns {CalDom} Returns this empty chainable CalDom instance
+	 * @example
+	 * 
+	 * //Remove all <p> elements
+	 * _("p").remove();
 	 */
 	remove: function(){
 		this.each(function(elem){
