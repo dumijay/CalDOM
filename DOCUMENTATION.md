@@ -69,7 +69,7 @@ ___
 
 ## .find("\<query\>")
 
-Find matching child elements for all elements in this CalDom instance
+Find matching descendent elements for all elements in this CalDom instance
 
 #### Parameters
 
