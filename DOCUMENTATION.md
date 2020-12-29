@@ -54,7 +54,7 @@ Call CalDom's query function directly using \_.q()
 var container = _.q("#container-id")[0];
 
 //Create a new <div> element
-var div = _.q("+div")[0];
+var div = _.q("+div")[0]; 
 
 //Get all <p> elements inside <article> using an XPath query
 var paragraph_array = _.q("$//article/p");
