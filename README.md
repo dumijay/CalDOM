@@ -1,7 +1,9 @@
 # CalDom
 CalDom is a chainable DOM traverser and a manipulator. A super lightweight, 1.4KB minimalistic JavaScript library inspired by key jQuery features.
 
-It's simply a chainable and iterable wrapper around document.createElement(), document.querySelectorAll() and document.evaluate(). Just the right amount of short-hand tricks while keeping a smaller foot-print. Since the framework is just wrapping the official DOM API, performance drop is minimal vs pure JavaScript.
+It's simply a chainable and iterable wrapper around document.createElement(), document.querySelectorAll() and document.evaluate(). Just the right amount of short-hand tricks while keeping a smaller footprint.
+
+Since the framework is just wrapping the official DOM API, the performance drop is minimal compared to pure JavaScript.
 
 # Basic Syntax
 Using the alias _ (underscore) for easy reference. (This can be set to $ or any variable-name).
@@ -149,7 +151,8 @@ import _ from "./dist/caldom-1.0.0.min.mjs.js";
 //Constructor. +tag to createElement. Use a CSS Selector or XPath to find elements.
 _("<q>");
 
-//Access CalDom's query function directly. +tag to createElement. Use a CSS Selector or XPath to find elements. Returns an array of created or found elements.
+//Access CalDom's query function directly. +tag to createElement. Use a CSS Selector or XPath
+//to find elements. Returns an array of created or found elements.
 _.q("<q>");
 
 //Find descendants using a CSS Selector or XPath query starting with '$'.
@@ -172,10 +175,12 @@ _("<q>").prop( {key: value} || key, values[s] );
 ## Manipulate DOM Tree
 
 ```js
-//Append/Move element(s). Elements can be a single Element, array of Elements, a CalDom instance or a generator function.
+//Append/Move element(s). Elements can be a single Element, an array of Elements,
+//a CalDom instance or a generator function.
 _("<q>").append(element[s][, node]);
 
-//Prepend/Move element(s) as first child or before. Elements can be a single Element, array of Elements, a CalDom instance or a generator function.
+//Prepend/Move element(s) as the first child or before. Elements can be a single Element, 
+//an array of Elements, a CalDom instance or a generator function.
 _("<q>").prepend(element[s][, before_elem]);
 
 //Get an array of attribute value of each element.
@@ -251,10 +256,10 @@ _("<q>").data();
 _("<q>").elems;
 ```
 
-Syntax is mostly compatible with jQuery. Key difference is CalDom's output functions like val() returns an array of all values instead of jQuery's first-element-only return. They also accept arrays as inputs. Refer the full documentation here.
+The syntax is mostly compatible with jQuery. The key difference is CalDom's output functions like val() returns an array of all values instead of jQuery's first-element-only return. They also accept arrays as inputs. Refer the full documentation here.
 
 # Browser Support
-This is only tested with the latest versions. However, CalDom is using native, time-tested DOM API under the hood. Thus, it should work just fine with any modern browser. Minimum browser support based on MDN compatability specs listed below.
+This is only tested with the latest versions. However, CalDom is using native, time-tested DOM API under the hood. Thus, it should work just fine with any modern browser. Minimum browser support based on MDN compatibility specs is listed below.
 
 * Firefox 3.6+
 * Chrome 1+
@@ -278,7 +283,7 @@ Except,
 * .on(); .off(); IE 9+ [MDN/Polyfill](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener) | [MDN/Polyfill](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener)
 * .addClass(); .removeClass(); Chrome 8+, Opera 11.5+, Safari 6.1+, Android Web View 3+, Android Opera 11.5+, iOS Safari 5+ [MDN/Polyfill](https://developer.mozilla.org/en-US/docs/Web/API/Element/classList)
 
-ClDom is not providing work-arounds for legacy browser bugs. Use appropriate polyfills. If you need wider browser support including ancient IE versions, consider using legacy jQuery instead.
+CalDom is not providing workarounds for legacy browser bugs. Use appropriate polyfills. If you need wider browser support including ancient IE versions, consider using legacy jQuery instead.
 
 
 # Good God! Another jQuery-like framework?
@@ -290,7 +295,7 @@ About a few years ago, I was creating animated web stuff. Games, banners, etc. S
 * I needed a lightweight jQuery replacement. jQuery is offering so much in one bundle, I didn't need all of them.
 * Plus, I needed to stay up to date with DOM/vanilla javascript. (Because jQuery moves you away from the native DOM).
 
-Hence, CalDOM was born. A minamalist library with most of the functionality I need without an overkill.
+Hence, CalDOM was born. A minimalist library with most of the functionality I need without an overkill.
 Kept on improving it over the years as my primary DOM handler. Just decided to put it out thinking someone else might find it useful.
 
 ### Similar Projects
@@ -303,11 +308,11 @@ Kept on improving it over the years as my primary DOM handler. Just decided to p
 
 # What's the best jQuery alternative?
 
-If performance is a critical requirement, the best jQuery alternative is pure/vanilla JavaScript. jQuery was a life saver in the IE era. But now, all modern browsers are well standardized. They all support the official DOM API very well.
+If performance is a critical requirement, the best jQuery alternative is pure/vanilla JavaScript. jQuery was a lifesaver in the IE era. But now, all modern browsers are well standardized. They all support the official DOM API really well.
 
 Check out [http://youmightnotneedjquery.com/](http://youmightnotneedjquery.com/)
 
-On the other hand, using a framework massively reduce code complexity and effort while reducing performance. It's a compromise you need to make based on the nature of your project. Since CalDom is just wrapping the official DOM API, performance drop is very minimal compared to pure JavaScript.
+On the other hand, using a framework massively reduce code complexity and effort while reducing performance. It's a compromise you need to make based on the nature of your project. Since CalDom is just wrapping the official DOM API, the performance drop is very minimal compared to pure JavaScript.
 
 # Contributing
 
@@ -316,5 +321,10 @@ Your contributions are very welcome and thank you in advance.
 ## Key Principles
 
 * Performance and Minimalism are #1 priority.
-* Richness in short-hand methods and features is secondary.
+* The richness in short-hand methods and features is secondary.
 * Supporting legacy browsers is not a priority.
+
+## To-Do
+* Implement tests
+* Thorough browser version tests
+* Implement benchmarks
