@@ -27,10 +27,8 @@ _("body").append(
 
 ## CDN
 
-Thanks to jsDelivr.com
-
 ```html
-<script src="https://cdn.jsdelivr.net/gh/dumijay/CalDom/dist/caldom-1.0.0.min.js"></script>
+<script src="https://unpkg.com/caldom"></script>
 ```
 
 CalDom uses _ by default. To use a different alias, set:
@@ -47,6 +45,10 @@ before loading it.
 
 ## Use it as a Module
 When using it as a module, CalDom is not attaching anything to the global environment.
+
+```sh
+npm install caldom
+```
 
 ```js
 import _ from 'caldom';
@@ -67,7 +69,9 @@ requirejs( ["caldom"], function(_){} );
 import _ from "./dist/caldom-1.0.0.min.mjs.js";
 ```
 
-# Example: A Simple TODO App
+# Demo: A Simple TODO App
+
+[Play with it live at JSFiddle](https://jsfiddle.net/dumijay/c9m5zvgr/5/) without installing anything.
 
 ```html
 <style>
@@ -81,7 +85,7 @@ import _ from "./dist/caldom-1.0.0.min.mjs.js";
     }
 </style>
 
-<script src="js/caldom_1.0.0.js"></script>
+<script src="https://unpkg.com/caldom"></script>
 <script>
 
     var _input, _button;
@@ -280,35 +284,3 @@ Except,
 * .addClass(); .removeClass(); Chrome 8+, Opera 11.5+, Safari 6.1+, Android Web View 3+, Android Opera 11.5+, iOS Safari 5+ [MDN/Polyfill](https://developer.mozilla.org/en-US/docs/Web/API/Element/classList)
 
 Also, CalDom is not including work-arounds for browser bugs. Use appropriate polyfills. If you need wider browser support including ancient IE versions, consider using legacy jQuery instead.
-
-# Good God! Another jQuery-like framework?
-I know :)
-
-About a few years ago, I was creating animated web stuff (banners, games, etc.). The kind of animations more into programming than just moving parts.
-
-* I needed a lightweight jQuery replacement. Specially to fit Google Display Network(GDN)'s 150kb file size limit. jQuery was about 70kb-ish back then.
-* I needed a more cleaner way(vs jQuery) to create new elements on-the-go.
-* Plus, I needed to stay up to date with DOM/javascript vanilla syntax. (Because jQuery moves you away from native javascript/DOM).
-
-Hence, CalDOM was born. 8KB uncompressed, with most of the functionality I need without an overkill.
-I created this years ago and kept improving it as my primary DOM handler. Just decided to put it out thinking someone else might find it useful.
-
-If you have a similar requirement, this could be useful. Otherwise, I think you're better off with jQuery-alike.  
-
-(Come to think of it, my very unpopular decision to stay closer to vanilla javascript against tempting new frameworks paid back big time later. Drastically reduced the learning-curve when adapting to new dev environments.)
-
-Best alternative to jQuery is native/vanilla JS
-minamalist
-Tiny
-micro
-framework
-vanila JS
-mobile
-loading time
-JavaScript library
-modern browsers
-power users/developer
-Internet Explorer
-Performance
-Close to native/vanilla JS as possible
-powerful
