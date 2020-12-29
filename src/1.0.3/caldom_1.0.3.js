@@ -96,9 +96,9 @@ function insertBefore(element_or_elements_or_caldom_or_generator, before_elem_or
 
 /**
  * @constructor Initiates a CalDom instance
- * @param {(String|CalDom|Node|Node[]|NodeList|HTMLCollection)} [selector_caldom_elems] "+html_tag" creates a new element.
+ * @param {(String|CalDom|Node|Node[]|NodeList|HTMLCollection)} [selector_xpath_caldom_elems] "+html_tag" creates a new element.
  * Otherwise, it can be a CSS Selector, an XPath query starting with "$", a CalDom instance, a single Node/Element, an array of Nodes or a NodeList/HTMLCollection
- * @param {Window} [parent_window=window] (Optional) parent_window default to current window. Use this to work with iframes or external windows
+ * @param {Window} [parentWindow=window] (Optional) parent_window default to current window. Use this to work with iframes or external windows
  * @returns {CalDom} Returns a chainable CalDom instance
  * @example
  * 
@@ -157,7 +157,7 @@ CalDom.prototype = {
 	},
 
 	/**
-	 * Find matching child elements for all elements in this CalDom instance
+	 * Find matching descendent elements for all elements in this CalDom instance
 	 * @param {String} selector_or_xpath CSS Selector to find or XPath query starting with "$"
 	 * @returns {CalDom} A new chainable CalDom instance with found elements.
 	 * Note: This could return duplicates when there are inter-connected elements in this CalDom instance.
