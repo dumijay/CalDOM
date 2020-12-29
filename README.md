@@ -145,6 +145,8 @@ import _ from "./dist/caldom-1.0.0.min.mjs.js";
 
 # Quick Reference
 
+Refer the [full documentation here.](./DOCUMENTATION.md)
+
 ## DOM Traversal
 
 ```js
@@ -170,6 +172,9 @@ _("<q>").prop("path.to.property");
 
 //Set properties using a {k:v,} object or as key, value[s] parameters.
 _("<q>").prop( {key: value} || key, values[s] );
+
+//This is an alias for prop(); (for compatibility reasons).
+_("<q>").data();
 ```
 
 ## Manipulate DOM Tree
@@ -183,12 +188,6 @@ _("<q>").append(element[s][, node]);
 //an array of Elements, a CalDom instance or a generator function.
 _("<q>").prepend(element[s][, before_elem]);
 
-//Get an array of attribute value of each element.
-_("<q>").attr("<attr_key>");
-
-//Set attribute(s) using a {k:v,} object or as key, value[s] parameters.
-_("<q>").attr( {key: value} || key, values[s] );
-
 //Remove elements.
 _("<q>").remove();
 ```
@@ -196,6 +195,12 @@ _("<q>").remove();
 ## Manipulate/Retrieve Content
 
 ```js
+//Get an array of attribute value of each element.
+_("<q>").attr("<attr_key>");
+
+//Set attribute(s) using a {k:v,} object or as key, value[s] parameters.
+_("<q>").attr( {key: value} || key, values[s] );
+
 //Get an array of innerHTML from the elements. | Set a single or an array of innerHTML.
 //Look out for XSS vulnerabilities. Always use .text() to change text.
 _("<q>").html([html]);
@@ -244,19 +249,12 @@ _("<q>").children(["<css_selector">]);
 
 //Iterate over elements with a callback(elem, i).
 _("<q>").each(callback);
-```
-
-## Other
-
-```js
-//This is an alias for prop(); (for compatibility reasons).
-_("<q>").data();
 
 //Access created or found Nodes array directly.
 _("<q>").elems;
 ```
 
-The syntax is mostly compatible with jQuery. The key difference is CalDom's output functions like val() returns an array of all values instead of jQuery's first-element-only return. They also accept arrays as inputs. Refer the full documentation here.
+The syntax is mostly compatible with jQuery. The key difference is CalDom's output functions like val() returns an array of all values instead of jQuery's first-element-only return. They also accept arrays as inputs. Refer the [full documentation](./DOCUMENTATION.md).
 
 # Browser Support
 This is only tested with the latest versions. However, CalDom is using native, time-tested DOM API under the hood. Thus, it should work just fine with any modern browser. Minimum browser support based on MDN compatibility specs is listed below.
