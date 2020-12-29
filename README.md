@@ -31,12 +31,11 @@ _("body").append(
 <script src="https://unpkg.com/caldom"></script>
 ```
 
-CalDom uses _ by default. To use a different alias, set:
+CalDom uses _ by default. To use a different alias, set "_caldom_alias" before loading it:
 
 ```js
 window["_caldom_alias"] = "<new_alias>"
 ```
-before loading it.
 
 ## Download
 
@@ -48,10 +47,6 @@ When using it as a module, CalDom is not attaching anything to the global enviro
 
 ```sh
 npm install caldom
-```
-
-```js
-import _ from 'caldom';
 ```
 
 ```js
