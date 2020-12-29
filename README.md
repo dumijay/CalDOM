@@ -278,7 +278,7 @@ Except,
 * .on(); .off(); IE 9+ [MDN/Polyfill](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener) | [MDN/Polyfill](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener)
 * .addClass(); .removeClass(); Chrome 8+, Opera 11.5+, Safari 6.1+, Android Web View 3+, Android Opera 11.5+, iOS Safari 5+ [MDN/Polyfill](https://developer.mozilla.org/en-US/docs/Web/API/Element/classList)
 
-Also, CalDom is not including work-arounds for browser bugs. Use appropriate polyfills. If you need wider browser support including ancient IE versions, consider using legacy jQuery instead.
+ClDom is not providing work-arounds for legacy browser bugs. Use appropriate polyfills. If you need wider browser support including ancient IE versions, consider using legacy jQuery instead.
 
 
 # Good God! Another jQuery-like framework?
@@ -293,7 +293,7 @@ About a few years ago, I was creating animated web stuff. Games, banners, etc. S
 Hence, CalDOM was born. A minamalist library with most of the functionality I need without an overkill.
 Kept on improving it over the years as my primary DOM handler. Just decided to put it out thinking someone else might find it useful.
 
-Similar Projects
+### Similar Projects
 
 * [Zepto.js](https://github.com/madrobby/zepto)
 * [UmbrellaJS](https://github.com/franciscop/umbrella)
@@ -303,11 +303,11 @@ Similar Projects
 
 # What's the best jQuery alternative?
 
-Right now, the best performant jQuery alternative is pure/vanilla JavaScript. jQuery was a life saver in the IE era. But now, all modern browsers are well standardized. They all support the official DOM API very well. If performance is critical, vanilla JavaScript is your best choice.
+If performance is a critical requirement, the best jQuery alternative is pure/vanilla JavaScript. jQuery was a life saver in the IE era. But now, all modern browsers are well standardized. They all support the official DOM API very well.
 
 Check out [http://youmightnotneedjquery.com/](http://youmightnotneedjquery.com/)
 
-On the other hand, using a framework massively reduce code complexity and effort. It's a compromise you need to decide based on the nature of your project. Since CalDom is just wrapping the official DOM API, performance drop is minimal vs pure JavaScript.
+On the other hand, using a framework massively reduce code complexity and effort while reducing performance. It's a compromise you need to make based on the nature of your project. Since CalDom is just wrapping the official DOM API, performance drop is very minimal compared to pure JavaScript.
 
 # Contributing
 
@@ -315,6 +315,6 @@ Your contributions are very welcome and thank you in advance.
 
 ## Key Principles
 
-* Performance and Minimalism is #1 priority.
+* Performance and Minimalism are #1 priority.
 * Richness in short-hand methods and features is secondary.
 * Supporting legacy browsers is not a priority.
