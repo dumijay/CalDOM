@@ -3,7 +3,7 @@
 // Released under the MIT license - https://github.com/dumijay/CalDom/
 
 //Uncomment below line to support ES6 module import/export.
-//export default 
+// export default 
 (function(){
 /**
  * @private
