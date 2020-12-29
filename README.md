@@ -1,7 +1,7 @@
 # CalDom
 CalDom is a chainable DOM traverser and a manipulator. A super lightweight, 1.4KB minimalistic JavaScript library inspired by key jQuery features.
 
-It's simply a chainable and iterable wrapper around document.createElement(), document.querySelectorAll() and document.evaluate(). Just the right amount of short-hand tricks while keeping a smaller foot-print.
+It's simply a chainable and iterable wrapper around document.createElement(), document.querySelectorAll() and document.evaluate(). Just the right amount of short-hand tricks while keeping a smaller foot-print. Since the framework is just wrapping the official DOM API, performance drop is minimal vs pure JavaScript.
 
 # Basic Syntax
 Using the alias _ (underscore) for easy reference. (This can be set to $ or any variable-name).
@@ -279,3 +279,42 @@ Except,
 * .addClass(); .removeClass(); Chrome 8+, Opera 11.5+, Safari 6.1+, Android Web View 3+, Android Opera 11.5+, iOS Safari 5+ [MDN/Polyfill](https://developer.mozilla.org/en-US/docs/Web/API/Element/classList)
 
 Also, CalDom is not including work-arounds for browser bugs. Use appropriate polyfills. If you need wider browser support including ancient IE versions, consider using legacy jQuery instead.
+
+
+# Good God! Another jQuery-like framework?
+
+I know :) Here's what motivated me.
+
+About a few years ago, I was creating animated web stuff. Games, banners, etc. Specially for mobile & wide variety of low-end devices.
+
+* I needed a lightweight jQuery replacement. jQuery is offering so much in one bundle, I didn't need all of them.
+* Plus, I needed to stay up to date with DOM/vanilla javascript. (Because jQuery moves you away from the native DOM).
+
+Hence, CalDOM was born. A minamalist library with most of the functionality I need without an overkill.
+Kept on improving it over the years as my primary DOM handler. Just decided to put it out thinking someone else might find it useful.
+
+Similar Projects
+
+* [Zepto.js](https://github.com/madrobby/zepto)
+* [UmbrellaJS](https://github.com/franciscop/umbrella)
+* [Bliss](https://github.com/leaverou/bliss)
+* [Cash](https://github.com/fabiospampinato/cash)
+* [microjs: Collection of micro libraries](http://microjs.com)
+
+# What's the best jQuery alternative?
+
+Right now, the best performant jQuery alternative is pure/vanilla JavaScript. jQuery was a life saver in the IE era. But now, all modern browsers are well standardized. They all support the official DOM API very well. If performance is critical, vanilla JavaScript is your best choice.
+
+Check out [http://youmightnotneedjquery.com/](http://youmightnotneedjquery.com/)
+
+On the other hand, using a framework massively reduce code complexity and effort. It's a compromise you need to decide based on the nature of your project. Since CalDom is just wrapping the official DOM API, performance drop is minimal vs pure JavaScript.
+
+# Contributing
+
+Your contributions are very welcome and thank you in advance.
+
+## Key Principles
+
+* Performance and Minimalism is #1 priority.
+* Richness in short-hand methods and features is secondary.
+* Supporting legacy browsers is not a priority.
