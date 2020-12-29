@@ -177,7 +177,7 @@ CalDom.prototype = {
 		var output = [];
 
 		this.each(function(elem){
-			output.push( Array.from(q(selector_or_xpath, elem)) );
+			output.push( Array.prototype.slice.call( q(selector_or_xpath, elem) ) );
 		});
 
 		return new CalDom( Array.prototype.concat.apply([], output) );
@@ -829,7 +829,6 @@ else{
 	_global[alias] = calDom;
 }
 
-//Uncomment below line and export default statement at the begining of this anonymouse function to support ES6 export/import.
-// return calDom;
+return calDom;
 
 })();
