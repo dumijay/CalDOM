@@ -6,11 +6,9 @@ CalDom Documentation 1.0.3
 
 ### Parameters
 
--   `selector_xpath_caldom_elems`  
--   `parentWindow`  
--   `selector_caldom_elems` **([String][64] \| [CalDom][67] \| [Node][65] \| [Array][66]&lt;[Node][65]> | [NodeList][68] | HTMLCollection)?** "+html_tag" creates a new element.
+-   `selector_xpath_caldom_elems` **([String][64] \| [CalDom][67] \| [Node][65] \| [Array][66]&lt;[Node][65]> | [NodeList][68] | HTMLCollection)?** "+html_tag" creates a new element.
     Otherwise, it can be a CSS Selector, an XPath query starting with "$", a CalDom instance, a single Node/Element, an array of Nodes or a NodeList/HTMLCollection
--   `parent_window` **[Window][69]** (Optional) parent_window default to current window. Use this to work with iframes or external windows (optional, default `window`)
+-   `parentWindow` **[Window][69]** (Optional) parent_window default to current window. Use this to work with iframes or external windows (optional, default `window`)
 
 ### Examples
 
