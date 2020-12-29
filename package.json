@@ -1,0 +1,33 @@
+{
+  "name": "caldom",
+  "title": "CalDom",
+  "version": "1.0.0",
+  "description": "CalDom is a chainable minimalist DOM traverser and a manipulator. A lightweight 1KB JavaScript library inspired by key jQuery features.",
+  "main": "dist/caldom-1.0.0.min.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dumijay/CalDom.git"
+  },
+  "keywords": [
+    "Lightweight",
+    "Minimalist",
+    "JavaScript",
+    "Browser",
+    "DOM",
+    "Library",
+    "Tiny",
+    "Small",
+    "jQuery",
+    "Alternative"
+  ],
+  "author": "Dumi Jay",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dumijay/CalDom/issues"
+  },
+  "homepage": "https://github.com/dumijay/CalDom#readme",
+  "dependencies": {}
+}
