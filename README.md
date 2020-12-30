@@ -161,7 +161,7 @@ _.q("<q>");
 _("<q>").find("<q>");
 ```
 
-## Access any Element property or execute its methods.
+## Access element's properties or execute its methods.
 
 ```js
 //Call n-th level function for all elements and get return results as an array.
