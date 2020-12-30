@@ -1,4 +1,4 @@
-// CalDom 1.0.3 - Initial public release
+// CalDom 1.0.4 - Initial public release
 // Copyright (c) 2020 Dumi Jay
 // Released under the MIT license - https://github.com/dumijay/CalDom/
 

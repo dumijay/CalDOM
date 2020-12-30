@@ -63,7 +63,7 @@ requirejs( ["caldom"], function(_){} );
 
 ```js
 //ES6 Module
-import _ from "./dist/caldom-1.0.0.min.mjs.js";
+import _ from "./dist/caldom-1.0.4.min.mjs.js";
 ```
 
 # Demo: A Simple TODO App
