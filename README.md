@@ -45,7 +45,7 @@ window["_caldom_alias"] = "<new_alias>"
 * Source code is at [src](./src/)
 
 ## Use it as a Module
-When using it as a module, CalDom is not attaching anything to the global environment.
+CalDom is not attaching anything to the global environment when used as a module.
 
 ```sh
 npm install caldom
