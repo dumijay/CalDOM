@@ -807,27 +807,25 @@ var calDom = function(query, w){
 //Attachging q() directly, so it can be accessed without initiating a new CalDom instance. Eg: _.q("#container-id") or _.q("+div") or _.q("$//article/p")
 calDom.q = q;
 
-var _global = this || window;
-
-if( _global.module && module.exports ){
+if( typeof module != 'undefined' && module.exports ){
 	module.exports = calDom;
 }
-else if( _global.define ){
+else if( typeof define == 'function' ){
 	define(function(){
 		return calDom;
 	});
 }
 else{
 
-	//Attaching CalDom to window/global using declared separator
+	var _global = this;
 
-	var alias = _global["_caldom_alias"] || "_";
+	//Attaching CalDom to window/global using declared separator
 
 	// if( _global[alias] ){
 	// 	throw("_ is taken."); // CalDom is using '_' variable as a global short-hand by default. To use a different alias, define window['_cal_dom_alias'] = 'different_alias' before loading CalDom.
 	// }
 
-	_global[alias] = calDom;
+	_global[_global["_caldom_alias"] || "_"] = calDom;
 }
 
 return calDom;
