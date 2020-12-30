@@ -1,9 +1,9 @@
 {
   "name": "caldom",
   "title": "CalDom",
-  "version": "1.0.3.1",
+  "version": "1.0.4",
   "description": "CalDom is a chainable minimalist DOM traverser and a manipulator. A lightweight 1KB JavaScript library inspired by key jQuery features.",
-  "main": "dist/caldom-1.0.3.min.js",
+  "main": "dist/caldom-1.0.4.min.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
