@@ -481,20 +481,20 @@ CalDom.prototype = {
 	 * //Check whether text input tags contain the "error" class
 	 * var contain_error_array = _("input[type=text]").call( "classList.contains", ["error"] )
 	 */
-	call: function(function_name_or_path_array, args_array){
-		function_name_or_path_array = function_name_or_path_array.split(".");
+	call: function(function_path_name, args_array){
+		function_path_name = function_path_name.split(".");
 
 		var output = [];
 
-		if( function_name_or_path_array.length > 1 ){
+		if( function_path_name.length > 1 ){
 			this.each(function(elem){
-				var caller_config = getFinalDestination(elem, function_name_or_path_array);
+				var caller_config = getFinalDestination(elem, function_path_name);
 				output.push( caller_config[1][caller_config[0]].apply( caller_config[1], args_array ) )
 			});
 		}
 		else{
 			this.each(function(elem){
-				output.push( elem[function_name_or_path_array[0]].apply( elem, args_array ) )
+				output.push( elem[function_path_name[0]].apply( elem, args_array ) )
 			});
 		}
 
@@ -596,7 +596,7 @@ CalDom.prototype = {
 		return this;
 	},
 
-	/**
+	/** 
 	 * Add event listeners to elements in this CalDom instance.
 	 * @param {String} event_name(s) A single event name or multiple event names separated by spaces. 
 	 * @param {Function} handler Callback

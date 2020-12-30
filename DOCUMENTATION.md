@@ -140,9 +140,8 @@ Call methods directly if performance is a critical concern. CalDom's unique quer
 
 #### Parameters
 
--   `function_name_or_path_array`  
--   `args_array` **[Array][66]?** (Optional) An array of arguments to pass to the function
 -   `function_path_name` **[String][64]** Function name or path.to.functionName to call. Eg: "getBoundingClientRect" or "classList.contains"
+-   `args_array` **[Array][66]?** (Optional) An array of arguments to pass to the function
 
 #### Examples
 
@@ -521,10 +520,9 @@ Add event listeners to elements in this CalDom instance.
 
 #### Parameters
 
--   `event_names`  
+-   `event_names` **[String][64]** A single event name or multiple event names separated by spaces.
 -   `handler` **[Function][73]** Callback
 -   `options` **any?** (Optional) options to pass into addEventListener's 3rd param
--   `event_name` **[String][64]** (s) A single event name or multiple event names separated by spaces.
 
 #### Examples
 
@@ -548,10 +546,9 @@ Remove event listeners to elements in this CalDom instance.
 
 #### Parameters
 
--   `event_names`  
+-   `event_names` **[String][64]** A single event name or multiple event names separated by spaces.
 -   `handler` **[Function][73]** Callback. The same callback provided at on() or Node.addEventListener should be provided.
 -   `options` **any?** (Optional) options to pass into removeEventListener's 3rd param
--   `event_name` **[String][64]** (s) A single event name or multiple event names separated by spaces.
 
 #### Examples
 
