@@ -2,6 +2,7 @@
 // Copyright (c) 2020 Dumi Jay
 // Released under the MIT license - https://github.com/dumijay/CalDom/
 
+
 //Uncomment below line to support ES6 module import/export.
 // export default 
 (function(){
