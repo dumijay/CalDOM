@@ -23,6 +23,14 @@ _("body").append(
         .text("Click Me")
         .on("click", () => { console.log("Clicked"); } )
 );
+
+//Getters return arrays instead of first-element & Setters accept arrays
+var counts_array = _('input[type="number"]').val();
+
+counts_array[0] += 5; //modifying count
+counts_array[3] += 8;
+
+_('input[type="number"]').val(counts_array); //Replacing value of each element
 ```
 
 # Get Started
