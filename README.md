@@ -6,10 +6,10 @@ A minimalist (2.7kb) JavaScript UI library inspired by jQuery & Reactive Compone
 
 Since the library is just wrapping the official DOM API, the performance drop is about 1.2X compared to vanilla/pure JavaScript based on unit level benchmarks: [View Benchmark Results](https://caldom.org/benchmark/)
 
-Official site: [caldom.org](www.caldom.org)
+Official site: [caldom.org](https://www.caldom.org)
 
 
-Documentation: [caldom.org/docs/](caldom.org/docs/)
+Documentation: [caldom.org/docs/](https://caldom.org/docs/)
 
 # Basic Syntax
 
@@ -113,7 +113,7 @@ require("fs").writeFileSync(
 ```
 
 
-Visit [caldom.org](www.caldom.org) to experiment with many live code examples.
+Visit [caldom.org](https://www.caldom.org) to experiment with many live code examples.
 
 # Get Started
 
