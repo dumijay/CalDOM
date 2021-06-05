@@ -4,7 +4,7 @@
 
 A minimalist (2.7kb) JavaScript UI library inspired by jQuery & Reactive Components.
 
-Since the library is just wrapping the official DOM API, the performance drop is about 1.2X compared to vanilla/pure JavaScript based on unit level benchmarks: [View Benchmark Results](<benchmark>)
+Since the library is just wrapping the official DOM API, the performance drop is about 1.2X compared to vanilla/pure JavaScript based on unit level benchmarks: [View Benchmark Results](https://caldom.org/benchmark/)
 
 Official site: [caldom.org](www.caldom.org)
 
