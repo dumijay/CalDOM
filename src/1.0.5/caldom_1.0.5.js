@@ -647,7 +647,7 @@ CalDom.prototype = {
 	 *
 	 * //Remove multiple classes
 	 * _("#container").removeClass("dark-theme narrow");
-	 * _("#container").removeClass(["dark-theme","narrow"]);
+	 * _("#container").removeClass(["dark-theme","narrow"]`);
 	 */
 
 	"removeClass": function(class_names){
@@ -701,25 +701,33 @@ CalDom.prototype = {
 	/**
 	 * @category Event Handling
 	 * @description Add event listeners to elements in this CalDom instance.
-	 * @param {String} event_names A single event name or multiple event names separated by spaces.
+	 * @param {String} event_names A single event name or multiple event names separated by spaces or an array of events.
 	 * @param {Function} handler Callback function to handle the event. (Same as addEventListener(), this is just a wrapper it).
 	 * @param {any} [options] (Optional) options to pass into addEventListener's 3rd param.
 	 * @returns {CalDom} Returns this CalDom instance.
 	 * @example
 	 * //Add a click event listener
 	 * _("div-id").on( "click", function(e){ console.log("clicked") } );
+	 * _("div-id").on( ["click"], function(e){ console.log("clicked") } );
+	 *
 	 *
 	 * //Add mousemove and touchmove event listeners
 	 * _("div-id").on("mousemove touchmove", moveHandler);
+	 * _("div-id").on(["mousemove", "touchmove"], moveHandler);
+	 *
 	 */
 	"on": function(event_names, handler, options){
-		var events = event_names.split(" ");
-
-		for( var event_i = 0, events_len = events.length; event_i < events_len; event_i++ ){
-			this.each(function(elem){
-				elem.addEventListener(events[event_i], handler, options);
-			});
+		if (Array.isArray(event_names)) {
+			var events = event_names;
+		} else {
+			var events = event_names.split(" ");
 		}
+
+		events.forEach((event) => {
+			this.each(function(elem){
+				elem.addEventListener(event, handler, options);
+			});
+		});
 
 		return this;
 	},
@@ -739,13 +747,17 @@ CalDom.prototype = {
 	 * _("div-id").off("mousemove touchmove", moveHandler);
 	 */
 	"off": function(event_names, handler, options){
-		var events = event_names.split(" ");
-
-		for( var event_i = 0, events_len = events.length; event_i < events_len; event_i++ ){
-			this.each(function(elem){
-				elem.removeEventListener(events[event_i], handler, options);
-			});
+		if (Array.isArray(event_names)) {
+			var events = event_names;
+		} else {
+			var events = event_names.split(" ");
 		}
+
+		events.forEach((event) => {
+			this.each(function(elem){
+				elem.removeEventListener(event, handler, options);
+			});
+		})
 
 		return this;
 	},
