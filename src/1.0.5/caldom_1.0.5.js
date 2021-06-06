@@ -637,24 +637,29 @@ CalDom.prototype = {
 	/**
 	 * @category CSS Styling
 	 * @description Remove class name(s) from elements in this CalDom instance.
-	 * @param {String} class_names A single class name or multiple class names separated by spaces.
+	 * @param {String} class_names An array of class names or single/multiple classnames passed as a string seperated by spaces.
 	 * @returns {CalDom} Returns this CalDom instance.
 	 * @example
 	 *
 	 * //Remove a single class
 	 * _("#container").removeClass("visible");
+	 * _("#container").removeClass(["visible"]);
 	 *
 	 * //Remove multiple classes
 	 * _("#container").removeClass("dark-theme narrow");
+	 * _("#container").removeClass(["dark-theme","narrow"]);
 	 */
-	"removeClass": function(class_names){
-		var classes = class_names.split(" ");
 
-		for( var class_i = 0, class_len = classes.length; class_i < class_len; class_i++ ){
-			this.each(function(elem){
-				elem.classList.remove(classes[class_i]);
-			});
+	"removeClass": function(class_names){
+		if (Array.isArray(class_names)) {
+			var classes = class_names;
+		} else {
+			var classes = class_names.split(" ");
 		}
+
+		this.each(function(elem){
+			elem.classList.remove(...classes);
+		});
 
 		return this;
 	},
