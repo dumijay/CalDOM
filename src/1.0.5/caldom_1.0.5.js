@@ -735,7 +735,7 @@ CalDom.prototype = {
 	/**
 	 * @category Event Handling
 	 * @description Remove event listeners from elements in this CalDom instance.
-	 * @param {String} event_names A single event name or multiple event names separated by spaces.
+	 * @param {String} event_names A single event name or multiple event names separated by spaces or array of event names.
 	 * @param {Function} handler Callback. The same callback provided at on() or Node.addEventListener() should be provided.
 	 * @param {any} [options] (Optional) options to pass into removeEventListener's 3rd param.
 	 * @returns {CalDom} Returns this CalDom instance.
