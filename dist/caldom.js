@@ -1,6 +1,6 @@
 /*
- * CalDom 1.0.5 - Reactive
- * Copyright (c) 2020 Dumi Jay
+ * CalDom 1.0.6 - Reactive+
+ * Copyright (c) 2021 Dumi Jay
  * Released under the MIT license - https://github.com/dumijay/CalDom/
  */
 
@@ -16,9 +16,16 @@ var _slice = _array_prototype.slice;
 var _node_prototype = _window.Node.prototype;
 var _insertFunc_appendChild = _node_prototype.appendChild;
 var _insertFunc_insertBefore = _node_prototype.insertBefore;
+var _isNodeConnected = !("isConnected" in Node.prototype)
+	? function(node){
+		return !(node.ownerDocument.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_DISCONNECTED);
+	}
+	: function(node){
+		return node.isConnected;
+	}
 
 //RequstAnimationFrame polyfill
-var requestAnimationFramePolyfill = _window.requestAnimationFrame
+var _requestAnimationFramePolyfill = _window.requestAnimationFrame
 	|| _window.webkitRequestAnimationFrame
 	|| _window.mozRequestAnimationFrame
 	|| function(callback){
@@ -89,7 +96,7 @@ _window.Element.prototype.matches = _window.Element.prototype.matches
  * );
  */
 var CalDom = function(query_or_elems, children_array, parentWindow){
-	this._i(query_or_elems, children_array, parentWindow);
+	this.init(query_or_elems, children_array, parentWindow);
 };
 
 CalDom.prototype = {
@@ -98,11 +105,12 @@ CalDom.prototype = {
 	 * @private
 	 * @description Context window. Set during init. Refer CalDom's constructor for details.
 	 */
-	"_w": null,
+	"_w": undefined,
 
 	/**
 	 * @title elems: Array<Node>
-	 * @description Nodes/Elements of this CalDom instance
+	 * @description Nodes/Elements of this CalDom instance.
+	 * (Note that directly changing items here is not recommended.)
 	 * @example
 	 *
 	 * //Get 3rd img element (zero-based index)
@@ -118,21 +126,42 @@ CalDom.prototype = {
 
 	/**
 	 * @private
+	 * @description To track changed/deleted state keys. Refer usage inside react()
+	 */
+	_watch_state_changed_keys: {},
+
+	/**
+	 * @private
+	 * @description To track how many keys got changed/deleted. Refer usage inside react()
+	 */
+	_watch_state_change_count: 0,
+
+	_setMultipleMode: function(){
+		this.each = _eachMultiple;
+		this.map = _mapMultiple;
+		this.find = _findMultiple;
+		this.prop = _propMultiple;
+		this.attr = _attrMultiple;
+		this.css = _cssMultiple;
+		this.addClass = _addClassMultiple;
+		this.removeClass = _removeClassMultiple;
+	},
+
+	/**
+	 * @private
 	 * @description Internal init(). Refer CalDom's constructor
 	 */
-	_i: function(selector_xpath_caldom_elems, children_array, parentWindow){
+	init: function(selector_xpath_caldom_elems, children_array, parentWindow){
 
 		this._w = parentWindow || window;
 
-		if( !!selector_xpath_caldom_elems ){
-			if(selector_xpath_caldom_elems instanceof CalDom){
-				this.elems = selector_xpath_caldom_elems.elems;
-			}
-			else if(typeof selector_xpath_caldom_elems != "string"
-				&& selector_xpath_caldom_elems.length != undefined
-				&& !(selector_xpath_caldom_elems instanceof Node) //Because <select> has a length property 🤷‍♂️
-				){
-					this.elems = selector_xpath_caldom_elems;
+		if( selector_xpath_caldom_elems ){
+			// if(selector_xpath_caldom_elems instanceof CalDom){
+			// 	this.elems = selector_xpath_caldom_elems.elems;
+			// }
+			// else 
+			if( _isArrayLike(selector_xpath_caldom_elems) ){
+					this.elems = _slice.call( selector_xpath_caldom_elems );
 			}
 			else if(typeof selector_xpath_caldom_elems == 'object' ){
 				this.elems = [selector_xpath_caldom_elems];
@@ -140,9 +169,11 @@ CalDom.prototype = {
 			else{
 				this.elems = q(selector_xpath_caldom_elems, this._w.document);
 			}
+
+			if( this.elems.length != 1 ) this._setMultipleMode();
 		}
 
-		if( children_array instanceof Array ) insertBefore.call( this, children_array, null, _insertFunc_appendChild );
+		if( children_array && _isArrayLike(children_array) ) insertBefore.call( this, children_array, null, _insertFunc_appendChild );
 
 		return this;
 	},
@@ -164,17 +195,7 @@ CalDom.prototype = {
 	 * //Find following siblings of a <li> using an XPath query.
 	 * var li_next_siblings = _("#li-id").find("$./following-sibling::li");
 	 */
-	"find": function(selector_or_xpath){
-		var _this = this;
-		// TODO: Check whether this brings any meaningful performance improvement
-		// if( this.elems.length == 1 ) return new CalDom( this._q(selector_or_xpath, this.elems[0]) );
-
-		var output = this.map(function(elem){
-			return _slice.call( q(selector_or_xpath, elem) );
-		});
-
-		return new CalDom( _array_prototype.concat.apply([], output), null, this._w );
-	},
+	"find": _findSingle,
 
 	/**
 	 * @category Traverse
@@ -189,7 +210,7 @@ CalDom.prototype = {
 	 * var second_last_para = _("p").eq(-2);
 	 */
 	"eq": function(index){
-		return new CalDom( this.elems[ index < 0 ? this.elems.length + index : index ], null, this._w );
+		return new CalDom( this.elems[ index < 0 ? this.elems.length + index : index ], undefined, this._w );
 	},
 
 	/**
@@ -239,7 +260,7 @@ CalDom.prototype = {
 			});
 		}
 
-		return new CalDom( output, null, this._w );
+		return new CalDom( output, undefined, this._w );
 	},
 
 	/**
@@ -269,7 +290,7 @@ CalDom.prototype = {
 			}
 		});
 
-		return new CalDom( output, null, this._w );
+		return new CalDom( output, undefined, this._w );
 	},
 
 	/**
@@ -283,14 +304,7 @@ CalDom.prototype = {
 	 * 		console.log( i, elem.src );
 	 * });
 	 */
-	"each": function(callback){
-
-		for(var i = 0, len = this.elems.length; i < len; i++){
-			if( callback.call(this.elems[i], this.elems[i], i) === false ) break;
-		}
-
-		return this;
-	},
+	"each": _eachSingle,
 
 	/**
 	 * @category Iterate
@@ -304,20 +318,12 @@ CalDom.prototype = {
 	 * 			return elem.value.length;
 	 * 		})
 	 */
-	 "map": function(callback){
-		var output = [];
-
-		for(var i = 0, len = this.elems.length; i < len; i++){
-			output.push( callback(this.elems[i], i) );
-		}
-
-		return output;
-	},
+	 "map": _mapSingle,
 
 	/**
 	 * @category Manipulate/Retrieve Content
 	 * @description Get or set innerHTML of all elements in this CalDom instance.
-	 * (WARNING: This might lead to XSS vulnerabilities. Use text() if you're only updating text)
+	 * (WARNING: This might lead to XSS vulnerabilities. Use text() or append("text_content") if you're only updating text).
 	 * @param {String | Array<String>} [html_or_html_array] (Optional) A HTML string or an array of HTML strings to set at corresponding n-th element.
 	 * If not given, an array of innerHTML for all elements in this CalDom instance is returned.
 	 * @returns { CalDom | Array<String> } If html_or_html_array param is given, current CalDom instance is returned.
@@ -329,12 +335,12 @@ CalDom.prototype = {
 	 * //Set an array of HTML code to corresponding n-th element
 	 * _(".container").html( ['<p id="para-1"></p>', '<p id="para-2"></p>'] );
 	 *
-	 * //Get HTML code of all h3 elements as an array
-	 * var h3_html_array = _("h3").html();
+	 * //Get HTML code of all div elements as an array
+	 * var h3_html_array = _("div").html();
 	 */
 	"html": function(html_or_html_array){
 
-		// TODO: Make this direct for performance
+		// TODO: Make this direct for performance?
 		return this.prop("innerHTML", html_or_html_array, true);
 
 	},
@@ -358,7 +364,7 @@ CalDom.prototype = {
 	 */
 	"text": function(text_or_text_array){
 
-		// TODO: Make this direct for performance
+		// TODO: Make this direct for performance?
 		return this.prop("textContent", text_or_text_array, true);
 
 	},
@@ -412,38 +418,7 @@ CalDom.prototype = {
 	 * //Set an array of type attribute to n-th input elements
 	 * _("input").attr( "type", ["text", "password", "date"] );
 	 */
-	 "attr": function(key_or_key_values, val_or_val_array){
-
-		if( typeof key_or_key_values != 'string' ) {
-			this.each(function(elem){
-				for(var key in key_or_key_values){
-					elem.setAttribute( key, key_or_key_values[key] );
-				}
-			});
-		}
-		else if(arguments.length == 2) {
-
-			if( val_or_val_array instanceof Array ){
-				this.each(function(elem, i){
-					elem.setAttribute(key_or_key_values, val_or_val_array[i]);
-				});
-			}
-			else{
-				this.each(function(elem){
-					elem.setAttribute(key_or_key_values, val_or_val_array);
-				});
-			}
-		}
-		else {
-
-			return this.map(function(elem){
-				return elem.getAttribute(key_or_key_values);
-			});
-
-		}
-
-		return this;
-	},
+	 "attr": _attrSingle,
 
 	/**
 	 * @category Manipulate/Retrieve Content
@@ -472,38 +447,7 @@ CalDom.prototype = {
 	 * });
 	 */
 
-	"prop": function(key_or_key_values, val_or_val_array, _is_internal_call){
-
-		if( !_is_internal_call && typeof key_or_key_values != 'string' ) {
-
-			this.each(function(elem){
-				for(var key in key_or_key_values){
-					elem[key] = key_or_key_values[key];
-				}
-			});
-		}
-		else if( val_or_val_array != undefined ) {
-
-			if( val_or_val_array instanceof Array ){
-				this.each(function(elem, i){
-					elem[key_or_key_values] = val_or_val_array[i];
-				});
-			}
-			else{
-				this.each(function(elem){
-					elem[key_or_key_values] = val_or_val_array;
-				});
-			}
-		}
-		else {
-
-			return this.map(function(elem){
-				return elem[key_or_key_values];
-			});
-		}
-
-		return this;
-	},
+	"prop": _propSingle,
 
 	/**
 	 * @category Manipulate/Retrieve Content
@@ -518,17 +462,13 @@ CalDom.prototype = {
 	"data": function(key, value){
 
 		if( value == undefined ){
-			var output = [];
-
-			this.each(function(elem){
-				if( elem["_data"] ) output.push( elem["_data"][key] );
+			return this.map(function(elem){
+				if( elem["_data"] ) return elem["_data"][key];
 			});
-
-			return output;
 		}
 		else{
 
-			if( value instanceof Array ){
+			if( Array.isArray(value) ){
 				this.each(function(elem, i){
 					if( !elem["_data"] ) elem["_data"] = {};
 					elem["_data"][key] = value[i];
@@ -570,99 +510,44 @@ CalDom.prototype = {
 	 * //Get CSS value
 	 * var rule_value = _("#something").css("display")[0];
 	 */
-	 "css": function(key_or_key_values, val_or_val_array){
-
-		if( typeof key_or_key_values != 'string' ) {
-
-			this.each(function(elem){
-				for(var key in key_or_key_values){
-					elem.style[key] = key_or_key_values[key];
-				}
-			});
-		}
-		else if( val_or_val_array != undefined ) {
-
-			if( val_or_val_array instanceof Array ){
-				this.each(function(elem, i){
-					elem.style[key_or_key_values] = val_or_val_array[i];
-				});
-			}
-			else{
-				this.each(function(elem){
-					elem.style[key_or_key_values] = val_or_val_array;
-				});
-			}
-		}
-		else {
-
-			return this.map(function(elem){
-				return elem.style[key_or_key_values];
-			});
-		}
-
-		return this;
-	},
+	 "css": _cssSingle,
 
 	/**
 	 * @category CSS Styling
 	 * @description Add class name(s) to elements in this CalDom instance.
-	 * @param {String} class_names An array of class names or single/multiple classnames passed as a string seperated by spaces.
+	 * @param {String | Array} class_names A single class name or multiple class names separated by spaces or as an array.
 	 * @returns {CalDom} Returns this CalDom instance.
 	 * @example
 	 *
 	 * //Add a single class
 	 * _("#container").addClass("wide-view");
-	 * _("#container").addClass(['wide-view]);
 	 *
-	 * //Add multiple classes
+	 * //Add multiple classes (space-separated)
 	 * _("#container").addClass("visible dark-theme narrow");
-	 * _("#container").addClass(["visible","dark-theme","narrow");
-	 *
+	 * 
+	 * //Add multiple classes (array)
+	 * _("#container").addClass( ["visible", "dark-theme", "narrow"] );
 	 */
 
-	 "addClass": function(class_names){
-		if (Array.isArray(class_names)) {
-			var classes = class_names;
-		} else {
-			var classes = class_names.split(" ");
-		}
-
-		this.each(function(elem){
-			elem.classList.add(...classes);
-		});
-
-		return this;
-	},
+	 "addClass": _addClassSingle,
 
 	/**
 	 * @category CSS Styling
 	 * @description Remove class name(s) from elements in this CalDom instance.
-	 * @param {String} class_names An array of class names or single/multiple classnames passed as a string seperated by spaces.
+	 * @param {String | Array} class_names A single class name or multiple class names separated by spaces or as an array.
 	 * @returns {CalDom} Returns this CalDom instance.
 	 * @example
 	 *
 	 * //Remove a single class
 	 * _("#container").removeClass("visible");
-	 * _("#container").removeClass(["visible"]);
 	 *
-	 * //Remove multiple classes
+	 * //Remove multiple classes (space-separated)
 	 * _("#container").removeClass("dark-theme narrow");
-	 * _("#container").removeClass(["dark-theme","narrow"]`);
+	 * 
+	 * //Remove multiple classes (array)
+	 * _("#container").removeClass( ["dark-theme", "narrow"] );
 	 */
-
-	"removeClass": function(class_names){
-		if (Array.isArray(class_names)) {
-			var classes = class_names;
-		} else {
-			var classes = class_names.split(" ");
-		}
-
-		this.each(function(elem){
-			elem.classList.remove(...classes);
-		});
-
-		return this;
-	},
+	"removeClass": _removeClassSingle,
 
 	/**
 	 * @category CSS Styling
@@ -678,9 +563,7 @@ CalDom.prototype = {
 	 * _("#gallery").show("flex");
 	 */
 	"show": function(display_value){
-		return this.each(function(elem){
-			elem.style.display = display_value || "block";
-		});
+		return this.css("display", display_value || "block");
 	},
 
 	/**
@@ -693,40 +576,34 @@ CalDom.prototype = {
 	 * _("#container").hide();
 	 */
 	"hide": function(){
-		return this.each(function(elem){
-			elem.style.display = "none";
-		});
+		return this.css("display", "none");
 	},
 
 	/**
 	 * @category Event Handling
 	 * @description Add event listeners to elements in this CalDom instance.
-	 * @param {String} event_names A single event name or multiple event names separated by spaces or an array of events.
-	 * @param {Function} handler Callback function to handle the event. (Same as addEventListener(), this is just a wrapper it).
+	 * @param {String | Array} event_names A single event name or multiple event names separated by spaces or as an array.
+	 * @param {Function} handler Callback function to handle the event.
 	 * @param {any} [options] (Optional) options to pass into addEventListener's 3rd param.
 	 * @returns {CalDom} Returns this CalDom instance.
 	 * @example
 	 * //Add a click event listener
 	 * _("div-id").on( "click", function(e){ console.log("clicked") } );
-	 * _("div-id").on( ["click"], function(e){ console.log("clicked") } );
-	 *
 	 *
 	 * //Add mousemove and touchmove event listeners
 	 * _("div-id").on("mousemove touchmove", moveHandler);
+	 * 
+	 * //Event names as an array
 	 * _("div-id").on(["mousemove", "touchmove"], moveHandler);
 	 *
 	 */
 	"on": function(event_names, handler, options){
-		if (Array.isArray(event_names)) {
-			var events = event_names;
-		} else {
-			var events = event_names.split(" ");
-		}
+		var events = _getSpaceSeparatedArray(event_names);
 
-		events.forEach((event) => {
-			this.each(function(elem){
-				elem.addEventListener(event, handler, options);
-			});
+		this.each(function(elem){
+			for( var event_i = 0, events_len = events.length; event_i < events_len; event_i++ ){
+				elem.addEventListener(events[event_i], handler, options);
+			}
 		});
 
 		return this;
@@ -735,7 +612,7 @@ CalDom.prototype = {
 	/**
 	 * @category Event Handling
 	 * @description Remove event listeners from elements in this CalDom instance.
-	 * @param {String} event_names A single event name or multiple event names separated by spaces or array of event names.
+	 * @param {String | Array} event_names A single event name or multiple event names separated by spaces or as an array.
 	 * @param {Function} handler Callback. The same callback provided at on() or Node.addEventListener() should be provided.
 	 * @param {any} [options] (Optional) options to pass into removeEventListener's 3rd param.
 	 * @returns {CalDom} Returns this CalDom instance.
@@ -745,19 +622,18 @@ CalDom.prototype = {
 	 *
 	 * //Remove mousemove and touchmove event listeners
 	 * _("div-id").off("mousemove touchmove", moveHandler);
+	 * 
+	 * //Event names as an array
+	 * _("div-id").off(["mousemove",  "touchmove"], moveHandler);
 	 */
 	"off": function(event_names, handler, options){
-		if (Array.isArray(event_names)) {
-			var events = event_names;
-		} else {
-			var events = event_names.split(" ");
-		}
-
-		events.forEach((event) => {
-			this.each(function(elem){
-				elem.removeEventListener(event, handler, options);
-			});
-		})
+		var events = _getSpaceSeparatedArray(event_names);
+		
+		this.each(function(elem){
+			for( var event_i = 0, events_len = events.length; event_i < events_len; event_i++ ){
+				elem.removeEventListener(events[event_i], handler, options);
+			}
+		});
 
 		return this;
 	},
@@ -765,13 +641,12 @@ CalDom.prototype = {
 	/**
 	 * @category Manipulate DOM Tree
 	 * @title append( elems_caldom_generator, ...elems )
-	 * @description Append/Move elements to first element of this CalDom instance or append to all the elements by passing a generator function.
+	 * @description Append/Move elements to first element of this CalDom instance.
 	 * Null and undefined inputs are silently ignored. Note that if you append an existing element, it is moved to the new destination (not cloning).
-	 * @param {Node | String | CalDom | Array | NodeList | HTMLCollection | Function} elems_caldom_generator First argument can be a CalDom instance, a Node/String/HTML or an array of Node/String/HTML or a generator function that returns a new element.
-	 * Provided elements are added to the first element of this CalDom instance. Generated item by the callback is added to all elements in this CalDom instance.
-	 * Generator receives corresponding parent_node and parent_index as arguments: callback(parent_node: Node, parent_index: Number).
+	 * @param {Node | String | CalDom | Array | NodeList | HTMLCollection} elems_or_caldom First argument can be a CalDom instance, a Node/String or an array of Node/String.
+	 * Provided elements are added to the first element of this CalDom instance. This is XSS safe as it's considering String inputs as a text node. Use .html() or init _("<h1></h1>") to inject HTML.
 	 * See the examples for wide range of possibilities.
-	 * @param {Node | CalDom } [...elems] (Optional) If the first argument is not an array-type, all ...arguments are added to the first element of this CalDom instance.
+	 * @param {Node | String | CalDom } [...elems] (Optional) If the first argument is not an array-type, all ...arguments are added to the first element of this CalDom instance.
 	 * @returns {CalDom} Returns this CalDom instance.
 	 * @example
 	 *
@@ -794,9 +669,7 @@ CalDom.prototype = {
 	 *
 	 * 		null, undefined, //Silently ignored
 	 *
-	 * 		"Text Node",
-	 *
-	 * 		'<h1 id="big-title">Also support HTML syntax</h1>'
+	 * 		"Text Node"
 	 *
 	 * );
 	 *
@@ -811,35 +684,25 @@ CalDom.prototype = {
 	 *
 	 * 		document.createElement("p"),
 	 *
-	 * 		"Text Node",
-	 *
-	 * 		"<h2>Support HTML</h2>"
+	 * 		"Text Node"
 	 * 	]
 	 * );
 	 *
 	 * //Move existing <p> elements from "container-a" to "container-b"
 	 * _("#container-b").append( _("#container-a p") );
-	 *
-	 * //Append new elements using a generator function to all elements in this CalDom instance
-	 * _("#container-one").append(
-	 * 		function(parent_node, parent_index){
-	 * 			return _("+div").text("I'm inside parent: " + parent_index);
-	 * 		}
-	 * );
 	 */
-	"append": function(elems_caldom_generator){
-		return insertBefore.call(this, elems_caldom_generator instanceof Array ? elems_caldom_generator : arguments, null, _insertFunc_appendChild);
+	"append": function(elems_or_caldom){
+		return insertBefore.call(this, _isArrayLike(elems_or_caldom) ? elems_or_caldom : arguments, null, _insertFunc_appendChild);
 	},
 
 	/**
 	 * @category Manipulate DOM Tree
-	 * @description Prepend/Move elements to the first element of this CalDom instance or prepend to all the elements by passing a generator function.
+	 * @description Prepend/Move elements to the first element of this CalDom instance.
 	 * (Same as append(), except 2nd argument is reserved to identify before element.)
 	 * Null and undefined inputs are silently ignored. Note that if you prepend an existing element, it is moved to the new destination (not cloning).
-	 * @param {Node | CalDom | Array | NodeList | HTMLCollection | Function} elems_caldom_generator First argument can be a CalDom instance, a Node/String/HTML or an array of Node/String/HTML or a generator function that returns a new Element.
-	 * Items are prepended to the first element of this CalDom instance. Generated item is prepended to all elements in this CalDom instance.
-	 * Generator receives corresponding parent_node and parent_index as arguments: callback(parent_node: Node, parent_index: Number).
-	 * @param {Node | CalDom} [before_elem_or_caldom] (Optional) If provided, items are inserted before this element instead before the firstChild.
+	 * @param {Node | CalDom | Array | NodeList | HTMLCollection} elems_or_caldom First argument can be a CalDom instance, a Node/String or an array of Node/String.
+	 * Items are prepended to the first element of this CalDom instance. This is XSS safe as it's considering String inputs as a text node. Use .html() or init _("<h1></h1>") to inject HTML.
+	 * @param {Node | String | CalDom} [before_elem_or_caldom] (Optional) If provided, items are inserted before this element instead before the firstChild.
 	 * @returns {CalDom} Returns this CalDom instance.
 	 * @example
 	 *
@@ -859,8 +722,8 @@ CalDom.prototype = {
 	 * //First argument of prepend() is the same as append().
 	 * //Refer its examples for a wide variety of possibilities.
 	 */
-	"prepend": function(elems_caldom_generator, before_elem_or_caldom){
-		return insertBefore.call(this, elems_caldom_generator instanceof Array ? elems_caldom_generator : [elems_caldom_generator], before_elem_or_caldom, _insertFunc_insertBefore);
+	"prepend": function(elems_or_caldom, before_elem_or_caldom){
+		return insertBefore.call(this, _isArrayLike(elems_or_caldom) ? elems_or_caldom : [elems_or_caldom], before_elem_or_caldom, _insertFunc_insertBefore);
 	},
 
 	/**
@@ -880,6 +743,7 @@ CalDom.prototype = {
 		});
 
 		this.elems = [];
+		this._setMultipleMode();
 
 		this._didUnmount(true);
 
@@ -945,7 +809,7 @@ CalDom.prototype = {
 	 */
 	 _willMount: function(){
 		if( this["render"] || this["update"] ){
-			if( this["willMount"] && !this._mounted ) this["willMount"]();
+			if( this["willMount"] && !this._mounted ) this["willMount"](this);
 
 			this.react(undefined, undefined, undefined, undefined, undefined, true);
 		}
@@ -957,11 +821,11 @@ CalDom.prototype = {
 	 * This function name is not preserved in minified version.
 	 */
 	_didMount: function(){
-		var already_mounted = this._mounted;
+		var already_mounted = this._mounted == true;
 
 		this._mounted = true;
 
-		if( this["didMount"] && !already_mounted ) this["didMount"]();
+		if( this["didMount"] && !already_mounted ) this["didMount"](this);
 	},
 
 	/**
@@ -971,7 +835,7 @@ CalDom.prototype = {
 	 * This is used to differentiate component removal through replace() that might get re-connected at a different position in the DOM tree.
 	 */
 	_willUnmount: function(directly_removed){
-		if( this["willUnmount"] ) this["willUnmount"]( directly_removed );
+		if( this["willUnmount"] ) this["willUnmount"]( this, directly_removed );
 	},
 
 	/**
@@ -984,7 +848,21 @@ CalDom.prototype = {
 	_didUnmount: function(directly_removed){
 		this._mounted = false;
 
-		if( this["didUnmount"] ) this["didUnmount"]( directly_removed );
+		if( this["didUnmount"] ) this["didUnmount"]( this, directly_removed );
+	},
+
+	/**
+	 * @private
+	 * @description Used to call _didUpdate() in reactive mode.
+	 * This function name is not preserved in minified version.
+	 */
+	_didUpdate: function(){
+		
+		//Resetting batched and changed keys after update/render
+		this._watch_state_changed_keys = {};
+		this._watch_state_change_count = 0;
+
+		if( this["didUpdate"] ) this["didUpdate"]( this );
 	},
 
 	/**
@@ -996,32 +874,46 @@ CalDom.prototype = {
 	 * @param {Function} [config.render] (Optional, if update() is given) Should return a CalDom or a Node/Element. Return false to terminate render process.
 	 * render(state: any, component: CalDom): receieves state and component(this CalDom instance) as arguments.
 	 * All CalDom methods & properties (find(), text(), css(), etc.) can be accessed via component. Eg: component.text("Hello World!").
-	 * CalDom sync child nodes (including text), attributes, CSS, value, checked, indeterminate, selected & _data property set by .data() between connected DOM & virtual DOM. It doesn't sync events & other custom properties directly attached to DOM nodes.
-	 * To force a complete Node replacement with all events and properties, set a unique "key" attribute to each element.
+	 * CalDom sync child nodes (including text), attributes, CSS, value, checked, indeterminate, selected & _data property set by .data() between connected DOM & virtual DOM. It doesn't sync changed events & other custom properties directly attached to DOM nodes.
+	 * To force a complete Node replacement with all events and properties, set a different/incremental "caldom-v" attribute to the element at render() ("v" as in version of the element).
 	 *
-	 * The first render() gets executed synchronously. After that, render() gets executed asynchronously through requestAnimationFrame when the state changes. This is applicable in both watched = true mode or when react() is called manually.
+	 * The first render() gets executed synchronously. After that, render() gets executed asynchronously through requestAnimationFrame when the state changes. This is asynchronous in both watched = true mode or when react() is called manually.
 	 * Calling react() with a brand new state execute render() synchronously. Eg: app.react( new_state );
 	 *
 	 * @param {Function} [config.update] (Optional, if render() is given) If an update() function is present, CalDom will execute it instead of render(). (Intial render() get executed regardless).
 	 * Manually updating DOM changes is obviously more performant than a render() based virtual-DOM approach. Also, it is useful to update existing non-javascript originated(.html file based) HTML structures reactively.
 	 * If the update() returns true, CalDom will also execute render() and proceed with virtual-real DOM comparison and apply subsequent changes.
-	 * update(state: any, component: CalDom): receieves state & component(this CalDom instance) as arguments. All CalDom methods & properties (find(), text(), css(), etc,) can be accessed via component. Eg: component.css( "color", "green" )
+	 * 
+	 * update(
+	 * 	state: any, 
+	 * 	component: CalDom, 
+	 * 	state_changed_keys: Object, 
+	 * 	state_change_count: Number 
+	 * );
+	 * 
+	 * Arguments are state, component(this CalDom instance) and batched and changed state key names & change count since the last render()/update().
+	 * state_changed_keys & state_change_count is useful to do select direct DOM changes or fall back to render() by returning true if the changes are complex.
+	 * state_changed_keys is an Object. Eg: { key_name: String, value_is_available: Boolean }. If the state change is a deletion, value_is_available is set to false.
+	 * state_changed_keys is one-dimentional. If the same key_name is used more than once at deeper levels of state object, only the last key-value change is represented here. Use this.state for deeper analysis.
+	 * If the same key change multiple times, state_change_count is increased accordingly. state_changed_keys & state_change_count are only populated in watched = true mode.
+	 * 
+	 * All CalDom methods & properties (find(), text(), css(), etc,) can be accessed via component. Eg: component.css( "color", "green" )
 	 *
 	 * @param {Boolean} [config.watched=true] (Optional) True by default. If false, CalDom will not react to state changes automatically. Call react() manually after changing state.
 	 * CalDom is using Javascript Proxies to detect state changes. Browser versions released before 2016 may not support it natively. Implement a pollyfil for older browsers or you can call react() manually after state changes.
 	 * If Proxy is not supported caldom.watched will set to false despite initially setting config.watched = true.
-	 * If you chose not to use the Proxy for some reason, you can call .react() after state changes. There is no performance hit by calling it repetedly because CalDom is using requestAnimationFrame to update the DOM efficiently.
-	 * Also, calling react() manually immediately after state changes does not cause a re-render when Proxy is supported.
+	 * If you chose not to use the Proxy for some reason, you can call .react() after state changes. There is no performance hit by calling it repetedly because CalDom is using requestAnimationFrame to batch DOM updates efficiently.
+	 * Also, calling react() manually immediately after state changes does not cause a re-render even when Proxy is supported.
 	 *
-	 * @param {Function} [config.willMount] (Optional) Called before the Component is mounted(appended) into a parent Node.
-	 * @param {Function} [config.didMount] (Optional) Called after the Component is mounted(appended) into a parent Node.
+	 * @param {Function} [config.willMount] (Optional) Called before the Component is mounted(appended) into a parent Node. Receives current CalDom instance as the only argument.
+	 * @param {Function} [config.didMount] (Optional) Called after the Component is mounted(appended) into a parent Node. Receives current CalDom instance as the only argument.
 	 * @param {Function} [config.willUnmount] (Optional) Called before the Component is removed.
-	 * Callback receives one argument as callback( [directly_removed: Boolean] ). This is set to true if removed directly by calling .remove().
+	 * Callback receives two argument as callback( component: CalDom, [directly_removed: Boolean] ). directly_removed is set to true if removed directly by calling .remove().
 	 * Otherwise, set to undefined if removed while applying virtual-DOM changes to the real DOM. The removed component might get re-connected at a different position in the DOM tree.
-	 * @param {Function} [config.didUnmount] (Optional) Called after the Component is removed.
-	 * Callback receives one argument as callback( [directly_removed: Boolean] ). This is set to true if removed directly by calling .remove().
+	 * @param {Function} [config.didUnmount] (Optional) Called after the Component is removed. 
+	 * Callback receives two argument as callback( component: CalDom, [directly_removed: Boolean] ). directly_removed is set to true if removed directly by calling .remove().
 	 * Otherwise, set to undefined if removed while applying virtual-DOM changes to the real DOM. The removed component might get re-connected at a different position in the DOM tree.
-	 * @param {Function} [config.didUpdate] (Optional) Called after the Component is rendered and all virtual-DOM changes applied to the real DOM.
+	 * @param {Function} [config.didUpdate] (Optional) Called after the Component is updated and/or rendered and all virtual-DOM changes applied to the real DOM. Receives current CalDom instance as the only argument.
 	 *
 	 * @returns {CalDom} Returns this CalDom instance.
 	 *
@@ -1066,7 +958,35 @@ CalDom.prototype = {
 	 * );
 	 *
 	 * helloWorld.state.name = "CalDom!";
+	 * 
+	 * //Combine the power of both render() & update()
+	 * var helloWorld = _("#main-heading").react(
+	 * 		{ name : "World!", visible: false },
+	 * 		{
+	 * 			render: (state, component) => {
+	 * 				var heading = _("+h1", [ "Hello " + state.name ] );
+	 * 				
+	 * 				if( state.visible ) heading.addClass("visible");
+	 * 				return heading;
+	 * 			},
+	 * 
+	 * 			update: (state, component, changed_keys, state_change_count) => {
+	 * 				if( state_change_count == 1 && "visibility" in changed_keys ){
+	 * 					
+	 * 					//Directly & efficiently update DOM without going through Virtual-DOM
+	 * 					if( state.visible ) this.addClass("visible");
+	 * 					else this.removeClass("visible");
+	 * 				}
+	 * 				else{
+	 * 					//If the changes are too complex, proceed to render() via Virtual-DOM
+	 * 					return true;
+	 * 				}
+	 * 			}
+	 * 		}
+	 * );
 	 *
+	 * helloWorld.state.visible = true;
+	 * 
 	 * //Manual reactive approach (without automatic update on state change)
 	 * var helloWorldApp = _().react(
 	 *     { name: "World!" },
@@ -1087,46 +1007,60 @@ CalDom.prototype = {
 	 * //This gets executed synchronously (not using requestAnimationFrame)
 	 * helloWorldApp.react( { name: "JS!" } );
 	 */
-	"react": function( state, config, _is_watched_updated, _changed_state_obj, _state_changed_key, _mounting, _is_request_animation_frame ){
+	"react": function( state, config, _is_watched_updated, _state_changed_key, _state_is_key_available, _mounting, _is_request_animation_frame ){
 		var _this = this;
 
-		if( _this["watched"] && arguments.length == 0 ) return _this;
+		var is_zero_arguments = arguments.length == 0;
+
+		if( _this["watched"] && is_zero_arguments ) return _this;
 
 		// Using requestAnimationFrame() to avoid rendering bursts for multiple variable changes (Proxy setter fires at every change in .state watch mode).
+		if( _is_watched_updated || (is_zero_arguments && !_is_request_animation_frame) ){
+			
+			if( _this["update"] ){
+				
+				if( !is_zero_arguments ){
+					_this._watch_state_change_count++;
+				}
 
-		if( _is_watched_updated || (arguments.length == 0 && !_is_request_animation_frame) ){
-			if( _this._z ) return;
+				_this._watch_state_changed_keys[_state_changed_key] = _state_is_key_available;
+			}
 
-			_this._z = requestAnimationFramePolyfill(function(){ //Note this requestAnimationFrame is using current window instead of this._w
-				_this.react(undefined, undefined, undefined, _changed_state_obj, _state_changed_key, undefined, true);
+			if( _this._z ){
+				return;
+			}
+
+			_this._z = _requestAnimationFramePolyfill(function(){ //Note requestAnimationFrame is using current window instead of this._w
+				_this.react(undefined, undefined, undefined, undefined, undefined, undefined, true);
 			});
 
 			return _this;
 		}
-
-		_this._z = null;
-
-		if( !_mounting ){ //Because no config changes when called through append() -> _willMount()
+		else if( !_mounting ){ //Because no config changes when called through append() -> _willMount()
 			if( config ){
-				if( config["render"] != undefined ) _this["render"] = config["render"];
-				if( config["update"] != undefined ) _this["update"] = config["update"];
+				for( var key in config ){ //There is a risk of overriding core functions/methods here
+					_this[key] = config[key];
+				}
 
-				if( config["watched"] != undefined ) _this["watched"] = config["watched"];
+				// if( config["render"] != undefined ) _this["render"] = config["render"];
+				// if( config["update"] != undefined ) _this["update"] = config["update"];
 
-				if( config["willMount"] != undefined ) _this["willMount"] = config["willMount"];
-				if( config["didMount"] != undefined ) _this["didMount"] = config["didMount"];
-				if( config["willUnmount"] != undefined ) _this["willUnmount"] = config["willUnmount"];
-				if( config["didUnmount"] != undefined ) _this["didUnmount"] = config["didUnmount"];
+				// if( config["watched"] != undefined ) _this["watched"] = config["watched"];
 
-				if( config["didUpdate"] != undefined ) _this["didUpdate"] = config["didUpdate"];
+				// if( config["willMount"] != undefined ) _this["willMount"] = config["willMount"];
+				// if( config["didMount"] != undefined ) _this["didMount"] = config["didMount"];
+				// if( config["willUnmount"] != undefined ) _this["willUnmount"] = config["willUnmount"];
+				// if( config["didUnmount"] != undefined ) _this["didUnmount"] = config["didUnmount"];
+
+				// if( config["didUpdate"] != undefined ) _this["didUpdate"] = config["didUpdate"];
 			}
 
 			if( !this._w["Proxy"] ) _this["watched"] = false; //Silently failing
 
 			if( state != undefined ){
 				if( _this["watched"] != false ){
-					_this.state = watch(state, function(obj, key){
-						_this.react(undefined, undefined, true, obj, key);
+					_this.state = watch(state, function(key, is_deleted){
+						_this.react(undefined, undefined, true, key, is_deleted);
 					});
 				}
 				else{
@@ -1135,52 +1069,70 @@ CalDom.prototype = {
 			}
 		}
 
-		if( _this.update && ( !_this.render || (_this.elems[0] && _this.elems[0]["_h"])) ){ //Checking _h to detect whether the first render() is done.
-			if( !_this["update"](_this.state, _this) ) return _this; //if update() returns true, continue to render
+		_this._z = null;
+
+		var current_first_elem = _this.elems[0];
+		var has_first_elem = !!current_first_elem;
+
+		if( !_this._mounted && !_mounting ){
+			if( has_first_elem && _isNodeConnected(current_first_elem) ){
+				_this._mounted = true;
+			}
+			else{
+				return _this; //Don't need to render() if not mounting or mounted
+			}
 		}
 
-		if( !_this._mounted && !_mounting) return _this; //Don't need to render() if not mounting or mounted
+		var is_parent_re_react_call = _this._mounted && _mounting;
 
-		var old_dom = _this.elems[0];
+		if( !is_parent_re_react_call && _this["update"] && ( !_this.render || ( has_first_elem && current_first_elem["_h"] )) ){ //Checking _h to detect whether the first render() is done.
+			var continue_to_render = _this["update"](_this.state, _this, _this._watch_state_changed_keys, _this._watch_state_change_count);
+
+			if( !continue_to_render ){ //if update() returns true, continue to render
+				_this._didUpdate();
+				
+				return _this; 
+			}
+		}
 
 		// Render request via a parent component. No this.state changes.
 		// TODO: Consider the cost of render() vs elems[0].cloneNode().
 		// Or just pass reference object to the replace()
-		if( _this._mounted && _mounting && !_changed_state_obj ){
-			var cloned_root = _this.elems[0].cloneNode(true);
+		if( is_parent_re_react_call ){
+			var cloned_root = current_first_elem.cloneNode(true);
 			cloned_root["_h"] = _this;
-			cloned_root._original_root = _this.elems[0];
+			cloned_root._original_root = current_first_elem;
 
 			_this._v = [ cloned_root ]; //To preserve old_dom children when the new virtual-dom appendChild()
 		}
 		else{
 
-			var new_dom = _this["render"](_this.state, _this, _changed_state_obj, _state_changed_key);
+			var new_dom = _this["render"](_this.state, _this);
 			if( !new_dom ) return _this;
 
 			if( new_dom instanceof CalDom ) new_dom = new_dom.elems[0];
 
 			new_dom["_h"] = _this; //_h for DOM handler
 
-			if( !old_dom ){
+			if( !current_first_elem ){
 				_this.elems = [new_dom];
 			}
 			else {
-				var new_root = _replace( new_dom, old_dom, old_dom );
+				var new_root = _replace( new_dom, current_first_elem, current_first_elem );
 
 				if( new_root ){
 					_this.elems[0] = new_root; //Note that only elems[0] is considered. Ideally all components only must have one element as the root.
 				}
 			}
 
-			if( _this["didUpdate"] ) _this["didUpdate"]( _this.state, _this );
+			_this._didUpdate();
 
 		}
 
 		return _this;
 	}
 
-	//TODO: Add .shadow({}) to support Shadow DOM
+	//TODO: Add .shadow({}) (or something similar?) to support Shadow DOM
 
 };
 
@@ -1191,9 +1143,9 @@ CalDom.prototype = {
  * @param {Node} old_dom_node Existing Node
  * @param {Boolean} enumerate_children Whether to enumerate children
  */
- function copyProps(new_dom_node, old_dom_node, enumerate_children){
+ function _copyProps(new_dom_node, old_dom_node, enumerate_children){
 	//TODO: Make sure this is all common cases. Is it? Also, how about implementing Object.assign()?
-
+	
 	if( Object.getPrototypeOf(old_dom_node).hasOwnProperty("value") ){ //Because some of these exists in Elements other than HTMLInputElement like <Button>
 		if( old_dom_node.value != new_dom_node.value ) old_dom_node.value = new_dom_node.value;
 		if( old_dom_node.checked != new_dom_node.checked ) old_dom_node.checked = new_dom_node.checked;
@@ -1201,14 +1153,14 @@ CalDom.prototype = {
 	}
 
 	if( old_dom_node.selected != new_dom_node.selected ) old_dom_node.selected = new_dom_node.selected;
-	if( new_dom_node["_data"] ) old_dom_node["_data"] = new_dom_node["_data"];
+	if( old_dom_node["_data"] != new_dom_node["_data"] ) old_dom_node["_data"] = new_dom_node["_data"];
 
 	if( enumerate_children ){
-		var new_dom_node_child_nodes = _slice.call(new_dom_node.children); ////Because enumerating live NodeList is slow
+		var new_dom_node_child_nodes = _slice.call(new_dom_node.children); // Because enumerating live NodeList is slow
 		var old_dom_node_child_nodes = _slice.call(old_dom_node.children);
 
 		for( var i = 0, len = new_dom_node_child_nodes.length; i < len; i++ ){
-			copyProps(new_dom_node_child_nodes[i], old_dom_node_child_nodes[i]);
+			_copyProps(new_dom_node_child_nodes[i], old_dom_node_child_nodes[i]);
 		}
 	}
 }
@@ -1221,7 +1173,7 @@ CalDom.prototype = {
  * @param {Node} old_dom_node_parent
  * @returns {Node} Returns new DOM if replaced
  */
-function _replace(new_dom_node, old_dom_node, old_dom_node_parent){
+ function _replace(new_dom_node, old_dom_node, old_dom_node_parent){
 	if( !new_dom_node ) return;
 
 	if( new_dom_node._original_root ) new_dom_node = new_dom_node._original_root;
@@ -1230,31 +1182,32 @@ function _replace(new_dom_node, old_dom_node, old_dom_node_parent){
 		return old_dom_node_parent.appendChild( new_dom_node );
 	}
 
-	var soft_replacable = new_dom_node.nodeType == 1
+	var new_dom_node_is_a_element = new_dom_node.nodeType == 1;
+
+	var soft_replacable = new_dom_node_is_a_element 
 		&& new_dom_node.tagName == old_dom_node.tagName //Assuming a drastically different tree, thus a hard replace is efficient.
-		&& new_dom_node["_h"] === old_dom_node["_h"] //Assuming enequal Component instances and keys are different elements (with their own custome properties & event listeners), thus a hard replace is required.
-				&& new_dom_node.getAttribute("key") === old_dom_node.getAttribute("key");
+		&& new_dom_node["_h"] === old_dom_node["_h"] //Assuming enequal Component instances and keys are different elements (with their own custome properties & event listeners), thus a hard replace is required. 
+		&& new_dom_node.getAttribute("caldom-v") === old_dom_node.getAttribute("caldom-v");
 
 	if( soft_replacable ){
-
+		
 		var copy_props_recursively = true;
 
 		//Placed at first assuming content will change more often than attributes
 		if( !new_dom_node.isEqualNode(old_dom_node) ){
-
-			copy_props_recursively = false;
-
+			
 			var new_dom_has_child_nodes = new_dom_node.hasChildNodes();
 
 			if( new_dom_has_child_nodes || old_dom_node.hasChildNodes() ){
 				var old_dom_node_child_nodes = (old_dom_node.childNodes);  //Keeping the live list so it adjusts automatically with Node.replaceChild()
 				var i = 0;
 
-
 				if( new_dom_has_child_nodes ){
 
-					var new_dom_node_child_nodes = _slice.call(new_dom_node.childNodes);  //Because enumerating live NodeList is slow
+					copy_props_recursively = false;
 
+					var new_dom_node_child_nodes = _slice.call(new_dom_node.childNodes);  //Because enumerating live NodeList is slow
+				
 					var len = new_dom_node_child_nodes.length;
 
 					//If the new_dom_element or old_dom_element has children, replace() it
@@ -1262,21 +1215,20 @@ function _replace(new_dom_node, old_dom_node, old_dom_node_parent){
 					for( ; i < len; i++ ){
 
 						var replaced_elem = _replace(new_dom_node_child_nodes[i], old_dom_node_child_nodes[i], old_dom_node);
-
+						
 						if( replaced_elem && replaced_elem["_h"] ){
 							replaced_elem["_h"].elems[0] = replaced_elem;
 						}
-
-						// old_dom_node_child_nodes.splice(i--, 1);
 					}
 				}
 
 				//Finally, if the old_dom_element is containing children not present in the new_dom_element, remove them
 				for( ; i < old_dom_node_child_nodes.length; i++ ){
+					
 					var old_dom_node_child = old_dom_node_child_nodes[i];
-
+					
 					var fire_unmount_events = old_dom_node_child["_h"] != undefined;
-
+					
 					if( fire_unmount_events ) old_dom_node_child["_h"]._willUnmount();
 
 					old_dom_node.removeChild( old_dom_node_child );
@@ -1284,15 +1236,13 @@ function _replace(new_dom_node, old_dom_node, old_dom_node_parent){
 
 					if( fire_unmount_events ) old_dom_node_child["_h"]._didUnmount();
 
-					// old_dom_node_child_nodes.splice(i--, 1);
 				}
 			}
-
-			copyProps( new_dom_node, old_dom_node, copy_props_recursively );
 
 			//Placed at second assuming content will change more often than attributes
 			//Syncing attributes (including style);
 			if( !new_dom_node.isEqualNode(old_dom_node) ){
+
 				for(var new_attr_i = 0, new_attr_len = new_dom_node.attributes.length; new_attr_i < new_attr_len; new_attr_i++ ){
 					var new_attr = new_dom_node.attributes[new_attr_i];
 
@@ -1300,30 +1250,40 @@ function _replace(new_dom_node, old_dom_node, old_dom_node_parent){
 						old_dom_node.setAttribute( new_attr.name, new_attr.value );
 					}
 				}
-
+		
 				//TODO: Checking above set attributes again here, will a if( indexOf(key) != -1 ) continue; more efficient?
-				for(var old_attr_i = 0, old_attr_len = old_dom_node.attributes.length; old_attr_i < old_attr_len; old_attr_i++ ){
+				for(var old_attr_i = 0; old_attr_i < old_dom_node.attributes.length; old_attr_i++ ){
 					var old_attr = old_dom_node.attributes[old_attr_i];
-
+		
 					if( !new_dom_node.hasAttribute(old_attr.name) ){
 						old_dom_node.removeAttribute(old_attr.name);
+
+						old_attr_i--;
 					}
 				}
 			}
 		}
+		
+		_copyProps( new_dom_node, old_dom_node, copy_props_recursively );
 	}
-	else if( !new_dom_node.isEqualNode(old_dom_node) ){ //Hard Replace
+	else if( !new_dom_node.isEqualNode(old_dom_node) ){
 
-		//TODO: Need to find a better way to find deleted only
-		var fire_unmount_events = old_dom_node["_h"] != undefined;
+		if( !new_dom_node_is_a_element ){
+			old_dom_node.nodeValue = new_dom_node.nodeValue;
+		}
+		else{ //Hard Replace
+			
+			//TODO: Need to find a better way to find deleted only
+			var fire_unmount_events = old_dom_node["_h"] != undefined;
 
-		if( fire_unmount_events ) old_dom_node["_h"]._willUnmount();
+			if( fire_unmount_events ) old_dom_node["_h"]._willUnmount();
 
-		old_dom_node.parentNode.replaceChild( new_dom_node, old_dom_node );
+			old_dom_node.parentNode.replaceChild( new_dom_node, old_dom_node );
 
-		if( fire_unmount_events ) old_dom_node["_h"]._didUnmount();
-
-		return new_dom_node;
+			if( fire_unmount_events ) old_dom_node["_h"]._didUnmount();
+			
+			return new_dom_node;
+		}
 	}
 }
 
@@ -1354,14 +1314,14 @@ function watch(what, onSetCallback){
 
             set: function(obj, key, value){
 				obj[key] = value;
-                onSetCallback(obj, key);
+                onSetCallback(key, true);
 
                 return true;
 			},
 
 			deleteProperty: function(obj, key){
 				delete obj[key]
-				onSetCallback(obj, key);
+				onSetCallback(key, false);
 
 				return true;
 			}
@@ -1373,28 +1333,29 @@ function watch(what, onSetCallback){
  * @private
  * @description Core function of append/prepend.
  * @see append() and prepend() for reference
- * @param {any} element_or_elements_or_caldom_or_generator
+ * @param {any} element_or_elements_or_caldom
  * @param {any} before_elem_or_caldom
  * @param {Function} _insertFunc
  */
-function insertBefore(element_or_elements_or_caldom_or_generator, before_elem_or_caldom, _insertFunc){
+function insertBefore(element_or_elements_or_caldom, before_elem_or_caldom, _insertFunc){
 	if( before_elem_or_caldom instanceof CalDom ) before_elem_or_caldom = before_elem_or_caldom.elems[0];
 
-	if( typeof element_or_elements_or_caldom_or_generator[0] == 'function' ){ //Generator function
-		this.each(function(elem, i){
-			var generated = element_or_elements_or_caldom_or_generator[0](elem, i);
+	// //TODO: Consider removing this because low pratical usage & the same can be acheived by .each()
+	// if( typeof element_or_elements_or_caldom_or_generator[0] == 'function' ){ //Generator function
+	// 	this.each(function(elem, i){
+	// 		var generated = element_or_elements_or_caldom_or_generator[0](elem, i);
 
-			_insertFunc.call(
-				elem,
-				generated instanceof CalDom ? generated.elems[0] : generated,
-				before_elem_or_caldom === undefined ? elem.firstChild : before_elem_or_caldom
-			);
-		});
-	}
-	else if(element_or_elements_or_caldom_or_generator.length != undefined){
+	// 		_insertFunc.call(
+	// 			elem,
+	// 			generated instanceof CalDom ? generated.elems[0] : generated,
+	// 			before_elem_or_caldom === undefined ? elem.firstChild : before_elem_or_caldom
+	// 		);
+	// 	});
+	// }
+	// else if(element_or_elements_or_caldom_or_generator.length != undefined){ //Can't we remove this?
 
-		for(var i = 0, len = element_or_elements_or_caldom_or_generator.length; i < len; i++){
-			var this_item = element_or_elements_or_caldom_or_generator[i];
+		for(var i = 0, len = element_or_elements_or_caldom.length; i < len; i++){
+			var this_item = element_or_elements_or_caldom[i];
 			if( !this_item ) continue;
 
 			var new_elems;
@@ -1407,10 +1368,7 @@ function insertBefore(element_or_elements_or_caldom_or_generator, before_elem_or
 				new_elems = this_item._v || this_item.elems;
 			}
 			else{
-				if( this_item.length != undefined
-					&& typeof this_item != 'string'
-					&& !(this_item instanceof Node) //Because <select> has a length property 🤷‍♂️
-				 ){
+				if( _isArrayLike(this_item) ){
 					new_elems = this_item;
 				 }
 				 else{
@@ -1425,10 +1383,8 @@ function insertBefore(element_or_elements_or_caldom_or_generator, before_elem_or
 				var new_elem = new_elems[elem_i];
 				if( !new_elem ) continue;
 
-				if( typeof new_elem == 'string' ){
-					new_elem = this._w.document
-						.createRange()
-						.createContextualFragment( new_elem ).firstChild;
+				if( typeof new_elem != 'object' ){
+					new_elem = this._w.document.createTextNode( new_elem );
 				}
 
 				_insertFunc.call(
@@ -1443,7 +1399,7 @@ function insertBefore(element_or_elements_or_caldom_or_generator, before_elem_or
 				this_item._didMount()
 			}
 		}
-	}
+	// }
 
 	return this;
 }
@@ -1504,6 +1460,290 @@ function insertBefore(element_or_elements_or_caldom_or_generator, before_elem_or
 	return _slice.call( parent_node.querySelectorAll(query) ); //Because (live?) NodeList enumeration is damn slow \_/ https://jsben.ch/1HYYe
 }
 
+/**
+ * @private
+ * @param {String|Array} values 
+ * @returns 
+ */
+function _getSpaceSeparatedArray(values){
+
+	return !Array.isArray(values) 
+		? values.split(" ") 
+		: values;
+}
+
+/**
+ * @private
+ * @param {*} obj 
+ * @returns {Boolean} 
+ */
+function _isArrayLike(obj){
+	return Array.isArray(obj)
+		|| (
+			obj
+			&& typeof obj != "string"
+			&& obj.length != undefined
+			&& !(obj instanceof Node) //Because <select> has a length property 🤷‍♂️
+		)
+}
+
+function _eachSingle(callback){
+	callback.call(this.elems[0], this.elems[0], 0);
+}
+
+function _eachMultiple(callback){
+
+	for(var i = 0, len = this.elems.length; i < len; i++){
+		if( callback.call(this.elems[i], this.elems[i], i) === false ) break;
+	}
+
+	return this;
+}
+
+function _propSingle(key_or_key_values, val_or_val_array, _is_internal_call){
+
+	if( !_is_internal_call && typeof key_or_key_values != 'string' ) {
+
+		for(var key in key_or_key_values){
+			this.elems[0][key] = key_or_key_values[key];
+		}
+	}
+	else if( val_or_val_array != undefined ) {
+
+		if( Array.isArray(val_or_val_array) ){
+			this.elems[0][key_or_key_values] = val_or_val_array[0];
+		}
+		else{
+			this.elems[0][key_or_key_values] = val_or_val_array;
+		}
+	}
+	else {
+		return [ this.elems[0][key_or_key_values]];
+	}
+
+	return this;
+}
+
+function _propMultiple(key_or_key_values, val_or_val_array, _is_internal_call){
+
+	if( !_is_internal_call && typeof key_or_key_values != 'string' ) {
+
+		this.each(function(elem){
+			for(var key in key_or_key_values){
+				elem[key] = key_or_key_values[key];
+			}
+		});
+	}
+	else if( val_or_val_array != undefined ) {
+
+		if( Array.isArray(val_or_val_array) ){
+			this.each(function(elem, i){
+				elem[key_or_key_values] = val_or_val_array[i];
+			});
+		}
+		else{
+			this.each(function(elem){
+				elem[key_or_key_values] = val_or_val_array;
+			});
+		}
+	}
+	else {
+
+		return this.map(function(elem){
+			return elem[key_or_key_values];
+		});
+	}
+
+	return this;
+}
+
+function _cssSingle(key_or_key_values, val_or_val_array){
+
+	if( typeof key_or_key_values != 'string' ) {
+		for(var key in key_or_key_values){
+			this.elems[0].style[key] = key_or_key_values[key];
+		}
+	}
+	else if( val_or_val_array != undefined ) {
+
+		if( Array.isArray(val_or_val_array) ){
+			this.elems[0].style[key_or_key_values] = val_or_val_array[0];
+		}
+		else{
+			this.elems[0].style[key_or_key_values] = val_or_val_array;
+		}
+	}
+	else {
+
+		return [ this.elems[0].style[key_or_key_values] ];
+	}
+
+	return this;
+}
+
+function _cssMultiple(key_or_key_values, val_or_val_array){
+
+	if( typeof key_or_key_values != 'string' ) {
+
+		this.each(function(elem){
+			for(var key in key_or_key_values){
+				elem.style[key] = key_or_key_values[key];
+			}
+		});
+	}
+	else if( val_or_val_array != undefined ) {
+
+		if( Array.isArray(val_or_val_array) ){
+			this.each(function(elem, i){
+				elem.style[key_or_key_values] = val_or_val_array[i];
+			});
+		}
+		else{
+			this.each(function(elem){
+				elem.style[key_or_key_values] = val_or_val_array;
+			});
+		}
+	}
+	else {
+
+		return this.map(function(elem){
+			return elem.style[key_or_key_values];
+		});
+	}
+
+	return this;
+}
+
+function _attrSingle(key_or_key_values, val_or_val_array){
+
+	if( typeof key_or_key_values != 'string' ) {
+		for(var key in key_or_key_values){
+			this.elems[0].setAttribute( key, key_or_key_values[key] );
+		}
+	}
+	else if(arguments.length == 2) {
+
+		if( Array.isArray(val_or_val_array) ){
+			this.elems[0].setAttribute(key_or_key_values, val_or_val_array[0]);
+		}
+		else{
+			this.elems[0].setAttribute(key_or_key_values, val_or_val_array);
+		}
+	}
+	else {
+
+		return [ this.elems[0].getAttribute(key_or_key_values) ];
+
+	}
+
+	return this;
+}
+
+function _attrMultiple(key_or_key_values, val_or_val_array){
+
+	if( typeof key_or_key_values != 'string' ) {
+		this.each(function(elem){
+			for(var key in key_or_key_values){
+				elem.setAttribute( key, key_or_key_values[key] );
+			}
+		});
+	}
+	else if(arguments.length == 2) {
+
+		if( Array.isArray(val_or_val_array) ){
+			this.each(function(elem, i){
+				elem.setAttribute(key_or_key_values, val_or_val_array[i]);
+			});
+		}
+		else{
+			this.each(function(elem){
+				elem.setAttribute(key_or_key_values, val_or_val_array);
+			});
+		}
+	}
+	else {
+
+		return this.map(function(elem){
+			return elem.getAttribute(key_or_key_values);
+		});
+
+	}
+
+	return this;
+}
+
+function _addClassListElem(elem, classes){
+	for( var class_i = 0, class_len = classes.length; class_i < class_len; class_i++ ){
+		elem.classList.add( classes[class_i] );
+	}
+}
+
+function _addClassSingle(class_names){
+	var classes = _getSpaceSeparatedArray(class_names);
+
+	_addClassListElem( this.elems[0], classes );
+
+	return this;
+}
+
+function _addClassMultiple(class_names){
+
+	this.each(function(elem){
+		_addClassListElem( elem, _getSpaceSeparatedArray(class_names) );
+	});
+
+	return this;
+}
+
+function _removeClassListElem(elem, classes){
+	for( var class_i = 0, class_len = classes.length; class_i < class_len; class_i++ ){
+		elem.classList.remove( classes[class_i] );
+	}
+}
+
+function _removeClassSingle(class_names){
+
+	_removeClassListElem( this.elems[0], _getSpaceSeparatedArray(class_names) );		
+
+	return this;
+}
+
+function _removeClassMultiple(class_names){
+	var classes = _getSpaceSeparatedArray(class_names);
+
+	this.each(function(elem){
+		_removeClassListElem(elem, classes);		
+	});
+
+	return this;
+}
+
+function _mapSingle(callback){
+	return [ callback(this.elems[0], 0) ];
+}
+
+function _mapMultiple(callback){
+	var output = [];
+
+	for(var i = 0, len = this.elems.length; i < len; i++){
+		output.push( callback(this.elems[i], i) );
+	}
+
+	return output;
+}
+
+function _findSingle(selector_or_xpath){
+	return new CalDom( q(selector_or_xpath, this.elems[0]), undefined, this._w );
+}
+
+function _findMultiple(selector_or_xpath){
+	var output = this.map(function(elem){
+		return _slice.call( q(selector_or_xpath, elem) );
+	});
+
+	return new CalDom( _array_prototype.concat.apply([], output), undefined, this._w );
+}
+
 var calDom = function(selector_xpath_caldom_elems, children, parentWindow){
 	return new CalDom( selector_xpath_caldom_elems, children, parentWindow );
 };
@@ -1535,7 +1775,7 @@ calDom["Component"] = CalDom;
  *
  * var version = _.version;
  */
- calDom["version"] = "1.0.5"
+ calDom["version"] = "1.0.6"
 
 if( typeof module != 'undefined' && module.exports ){
 	module.exports = calDom;

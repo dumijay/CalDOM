@@ -1,29 +1,21 @@
 #!/bin/zsh
 
-if [ -z $1 ]; then
-    echo 'Please provide the library version. Eg: npm run build "1.0.5"'
-    echo 'npm run build "1.0.5" ".mjs" to generate ES6 module' 
-    exit 1
-fi
+rm ./dist/*
 
-extension="$2"
-es_six=""
+cp "./src/caldom.js" "./dist/caldom.js"
 
-if [ -z "$extension" ]; then
-    extension=".js"
-else
-    es_six="export default "
-fi
+sed "s/.*export default/export default/" "./dist/caldom.js" >> "./dist/caldom.mjs.js"
 
-npx uglifyjs <<< $es_six <<< $(cat "./src/$1/caldom_$1.js") --mangle --mangle-props "keep_quoted" --toplevel --compress --output "./dist/caldom-$1.min$extension"
+npx uglifyjs "./dist/caldom.js" --mangle --mangle-props "keep_quoted" --toplevel --compress --source-map --output "./dist/caldom.min.js"
+npx uglifyjs "./dist/caldom.mjs.js" --mangle --mangle-props "keep_quoted" --toplevel --compress --source-map --output "./dist/caldom.min.mjs.js"
 
 echo "Uglified Size:"
-wc -c "./dist/caldom-$1.min$extension"
+wc -c "./dist/caldom.min.js"
 
 echo "GZiped Size:"
-gzip < "./dist/caldom-$1.min$extension" > "./dist/caldom-$1.min$extension.gz"
-wc -c "./dist/caldom-$1.min$extension.gz"
+gzip < "./dist/caldom.min.js" > "./dist/caldom.min.js.gz"
+wc -c "./dist/caldom.min.js.gz"
 
-rm "./dist/caldom-$1.min$extension.gz"
+rm "./dist/caldom.min.js.gz"
 
-#uglifyjs --beautify --output "./dist/caldom-$1.min.beautiful$extension" "./dist/caldom-$1.min$extension"
+# uglifyjs "./dist/caldom.min.js" --beautify --output "./dist/caldom.min.beautiful.js" 
