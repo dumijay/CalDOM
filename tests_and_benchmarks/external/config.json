@@ -1,0 +1,71 @@
+{
+  "headless": true,
+  "iteration_count": 5,
+  "assert_delay": 1000,
+  "cpu_slowdown": 1,
+  "library_paths": {
+    "vanilla_js": null,
+    "caldom": {
+      "sources": [
+        "caldom.min.js"
+      ],
+      "isLoadedFunction": " return typeof _ != 'undefined' "
+    },
+    "caldom.render": {
+      "sources": [
+        "caldom.min.js"
+      ],
+      "isLoadedFunction": " return typeof _ != 'undefined' "
+    },
+    "caldom.update": {
+      "sources": [
+        "caldom.min.js"
+      ],
+      "isLoadedFunction": " return typeof _ != 'undefined' "
+    },
+    "umbrellajs": {
+      "sources": [
+        "umbrellajs-3.2.2.js"
+      ],
+      "isLoadedFunction": " return typeof u != 'undefined' "
+    },
+    "zepto": {
+      "sources": [
+        "zepto-1.2.0.min.js"
+      ],
+      "isLoadedFunction": " return typeof $ != 'undefined' "
+    },
+    "jquery": {
+      "sources": [
+        "jquery-3.6.0.min.js"
+      ],
+      "isLoadedFunction": " return typeof jQuery != 'undefined' "
+    },
+    "react_keyed": {
+      "sources": [
+        "react.production-17.0.2.min.js",
+        "react-dom.production-17.0.2.min.js"
+      ],
+      "isLoadedFunction": " return typeof React != 'undefined' && typeof ReactDOM != 'undefined' "
+    },
+    "react_non_keyed": {
+      "sources": [
+        "react.production-17.0.2.min.js",
+        "react-dom.production-17.0.2.min.js"
+      ],
+      "isLoadedFunction": " return typeof React != 'undefined' && typeof ReactDOM != 'undefined' "
+    },
+    "vue_keyed": {
+      "sources": [
+        "vue.global.prod-3.1.1.js"
+      ],
+      "isLoadedFunction": " return typeof Vue != 'undefined' "
+    },
+    "vue_non_keyed": {
+      "sources": [
+        "vue.global.prod-3.1.1.js"
+      ],
+      "isLoadedFunction": " return typeof Vue != 'undefined' "
+    }
+  }
+}
