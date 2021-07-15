@@ -3,7 +3,7 @@ _pfreak.tasks.push({
     short_name: "todo_app_construction",
 
     category: "mixed_reactive",
-    description: 'A simple Todo App construction. (10,000 repeats).',
+    description: 'A simple Todo App construction.',
     assert_delay: 3000,
 
     setTaskData: function(config){
@@ -103,13 +103,13 @@ _pfreak.tasks.push({
                             placeholder: "Type item here",
                         }),
                     
-                _button = _("+button", ["Add"])
+                _button = _("+button", "Add")
                     .css({
                         cursor: "pointer",
                         marginLeft: "0.5em",
                     })
                     .on("click", () => {
-                        _("#todo-list", [
+                        _("#todo-list", 
                             _("+li", _input.val())
                                     .attr("class", "todo-item")
                                     .on("click", function(){
@@ -117,17 +117,17 @@ _pfreak.tasks.push({
                                             .css("text-decoration", "line-through")
                                             .addClass("finished");
                                     })
-                        ])
+                        )
                     }),
                 
                 _("+ol").attr("id", "todo-list"),
         
-                _("+button", ["Clear Finished"])
+                _("+button", "Clear Finished")
                     .on("click", () => {
                         _('li.finished').remove();
                     }),
                 
-                _("+button", ["Clear All"])
+                _("+button", "Clear All")
                     .css("marginLeft", "5px")
                     .on("click", () => {
                         _(".todo-item").remove();
@@ -310,7 +310,7 @@ _pfreak.tasks.push({
 
                 render(state){
 
-                    return _("+li", [state.task])
+                    return _("+li", state.task)
                         .css({
                             textDecoration: state.finished 
                                 ? "line-through" 
@@ -350,16 +350,16 @@ _pfreak.tasks.push({
                                 (e) => state.input = e.target.value 
                             ),
 
-                        _("+button", ["Add"])
+                        _("+button", "Add")
                             .on( "click", () => this.addItem() ),
 
                         //Appending ToDo Item components
                         _("+ol", state.items),
                         
-                        _("+button", ["Clear Finished"])
+                        _("+button", "Clear Finished")
                             .on( "click", () => this.clearFinished() ),
 
-                        _("+button", ["Clear All"])
+                        _("+button", "Clear All")
                             .css("marginLeft", "1em")
                             .on( "click", () => this.clearAll() )
                     ]);
@@ -409,21 +409,20 @@ _pfreak.tasks.push({
 
                 render(state){
 
-                    return _("+li", [state.task])
+                    return this.$.li = _("+li", state.task)
                         .css({
                             textDecoration: state.finished 
                                 ? "line-through" 
                                 : "none" 
                         })
-                        .on( "click", () => this.onClick() );
+                        .on( "click", () => this.onClick() ).elem;
                 }
 
                 update( state, component, changed_keys, changes_count ){
-                    this.css({
-                        textDecoration: state.finished 
+                    this.$.li.style
+                        .textDecoration = state.finished 
                             ? "line-through" 
-                            : "none" 
-                    });
+                            : "none";
                 }
 
                 onClick(){
@@ -457,16 +456,16 @@ _pfreak.tasks.push({
                                 (e) => state.input = e.target.value 
                             ),
 
-                        _("+button", ["Add"])
+                        _("+button", "Add")
                             .on( "click", () => this.addItem() ),
 
                         //Appending ToDo Item components
-                        _("+ol", state.items),
+                        this.$.ol = _("+ol", state.items),
                         
-                        _("+button", ["Clear Finished"])
+                        _("+button", "Clear Finished")
                             .on( "click", () => this.clearFinished() ),
 
-                        _("+button", ["Clear All"])
+                        _("+button", "Clear All")
                             .css("marginLeft", "1em")
                             .on( "click", () => this.clearAll() )
                     ]);
@@ -479,7 +478,7 @@ _pfreak.tasks.push({
                         }
                         else if( "items" in changed_keys ){
                             if( state.items.length == 0 ){
-                                this.find("li").remove();
+                                this.$.ol.children().remove();
                                 return;
                             }
                         }
@@ -488,7 +487,7 @@ _pfreak.tasks.push({
                         var new_item = state.items[ state.items.length - 1 ];
 
                         if( new_item ){
-                            this.find("ol", [new_item]);
+                            this.$.ol.append(new_item);
                             
                             return;
                         }
@@ -524,6 +523,134 @@ _pfreak.tasks.push({
             }
 
             _(container).append( new TodoApp() );
+        },
+
+        "vue_keyed": function(config){
+
+            var app_container = document.createElement("div");
+
+            document.body.appendChild(
+                app_container
+            );
+
+            var TodoApp = Vue.createApp({
+                data: function(){
+                    return{
+                        items: [],
+                        input: ""
+                    }
+                },
+
+                template: ''
+                    + '<div>'
+                        + '<input type="text" placeholder="Type task here" @change="input = $event.target.value" :value="input" />'
+                        + '<button @click="addItem">Add</button>'
+                        + '<ol>'
+                            + '<todo-item v-for="item in items" v-bind:item="item" :key="item.key"></todo-item>'
+                        + '</ol>'
+                        + '<button @click="clearFinished">Clear Finished</button>'
+                        + '<button @click="clearAll" style="{ marginLeft: 1em }">Clear All</button>'
+                    + '</div>',
+
+                methods:{
+                    addItem: function(){
+                        this.items.push({
+                            key: Date.now(),
+                            task: this.input,
+                            finished: false
+                        });
+                    },
+
+                    clearAll: function(){
+                        this.items = [];
+                    },
+
+                    clearFinished: function(){
+                        for( var i = 0; i < this.items.length; i++ ){
+                            var item = this.items[i];
+
+                            if( item.finished )
+                                this.items.splice(i--, 1);
+                        }
+                    }
+                }
+            });
+
+            TodoApp.component('todo-item', {
+                props: ["item"],
+                methods: {
+                    getTextDecoration: function(finished){
+                        return finished ? 'line-through' : 'none';
+                    }
+                },
+                template: '<li @click="item.finished = !item.finished" :style="{ textDecoration: getTextDecoration(item.finished)  }">{{ item.task }}</li>'
+            });
+
+            return TodoApp.mount( app_container );
+        },
+
+        "vue_non_keyed": function(config){
+
+            var app_container = document.createElement("div");
+
+            document.body.appendChild(
+                app_container
+            );
+
+            var TodoApp = Vue.createApp({
+                data: function(){
+                    return{
+                        items: [],
+                        input: ""
+                    }
+                },
+
+                template: ''
+                    + '<div>'
+                        + '<input type="text" placeholder="Type task here" @change="input = $event.target.value" :value="input" />'
+                        + '<button @click="addItem">Add</button>'
+                        + '<ol>'
+                            + '<todo-item v-for="item in items" v-bind:item="item"></todo-item>'
+                        + '</ol>'
+                        + '<button @click="clearFinished">Clear Finished</button>'
+                        + '<button @click="clearAll" style="{ marginLeft: 1em }">Clear All</button>'
+                    + '</div>',
+
+                methods:{
+                    addItem: function(){
+                        this.items.push({
+                            key: Date.now(),
+                            task: this.input,
+                            finished: false
+                        });
+                    },
+
+                    clearAll: function(){
+                        this.items = [];
+                    },
+
+                    clearFinished: function(){
+                        for( var i = 0; i < this.items.length; i++ ){
+                            var item = this.items[i];
+
+                            if( item.finished )
+                                this.items.splice(i--, 1);
+                        }
+                    }
+                }
+            });
+
+            TodoApp.component('todo-item', {
+                props: ["item"],
+                methods: {
+                    getTextDecoration: function(finished){
+                        return finished ? 'line-through' : 'none';
+                    }
+                },
+                template: '<li @click="item.finished = !item.finished" :style="{ textDecoration: getTextDecoration(item.finished)  }">{{ item.task }}</li>'
+            });
+
+            return TodoApp.mount( app_container );
         },
 
         "react_keyed": function(config){
@@ -803,134 +930,6 @@ _pfreak.tasks.push({
             }
 
             ReactDOM.render( React.createElement(TodoApp, null), container );
-        },
-
-        "vue_keyed": function(config){
-
-            var app_container = document.createElement("div");
-
-            document.body.appendChild(
-                app_container
-            );
-
-            var TodoApp = Vue.createApp({
-                data: function(){
-                    return{
-                        items: [],
-                        input: ""
-                    }
-                },
-
-                template: ''
-                    + '<div>'
-                        + '<input type="text" placeholder="Type task here" @change="input = $event.target.value" :value="input" />'
-                        + '<button @click="addItem">Add</button>'
-                        + '<ol>'
-                            + '<todo-item v-for="item in items" v-bind:item="item" :key="item.key"></todo-item>'
-                        + '</ol>'
-                        + '<button @click="clearFinished">Clear Finished</button>'
-                        + '<button @click="clearAll" style="{ marginLeft: 1em }">Clear All</button>'
-                    + '</div>',
-
-                methods:{
-                    addItem: function(){
-                        this.items.push({
-                            key: Date.now(),
-                            task: this.input,
-                            finished: false
-                        });
-                    },
-
-                    clearAll: function(){
-                        this.items = [];
-                    },
-
-                    clearFinished: function(){
-                        for( var i = 0; i < this.items.length; i++ ){
-                            var item = this.items[i];
-
-                            if( item.finished )
-                                this.items.splice(i--, 1);
-                        }
-                    }
-                }
-            });
-
-            TodoApp.component('todo-item', {
-                props: ["item"],
-                methods: {
-                    getTextDecoration: function(finished){
-                        return finished ? 'line-through' : 'none';
-                    }
-                },
-                template: '<li @click="item.finished = !item.finished" :style="{ textDecoration: getTextDecoration(item.finished)  }">{{ item.task }}</li>'
-            });
-
-            return TodoApp.mount( app_container );
-        },
-
-        "vue_non_keyed": function(config){
-
-            var app_container = document.createElement("div");
-
-            document.body.appendChild(
-                app_container
-            );
-
-            var TodoApp = Vue.createApp({
-                data: function(){
-                    return{
-                        items: [],
-                        input: ""
-                    }
-                },
-
-                template: ''
-                    + '<div>'
-                        + '<input type="text" placeholder="Type task here" @change="input = $event.target.value" :value="input" />'
-                        + '<button @click="addItem">Add</button>'
-                        + '<ol>'
-                            + '<todo-item v-for="item in items" v-bind:item="item"></todo-item>'
-                        + '</ol>'
-                        + '<button @click="clearFinished">Clear Finished</button>'
-                        + '<button @click="clearAll" style="{ marginLeft: 1em }">Clear All</button>'
-                    + '</div>',
-
-                methods:{
-                    addItem: function(){
-                        this.items.push({
-                            key: Date.now(),
-                            task: this.input,
-                            finished: false
-                        });
-                    },
-
-                    clearAll: function(){
-                        this.items = [];
-                    },
-
-                    clearFinished: function(){
-                        for( var i = 0; i < this.items.length; i++ ){
-                            var item = this.items[i];
-
-                            if( item.finished )
-                                this.items.splice(i--, 1);
-                        }
-                    }
-                }
-            });
-
-            TodoApp.component('todo-item', {
-                props: ["item"],
-                methods: {
-                    getTextDecoration: function(finished){
-                        return finished ? 'line-through' : 'none';
-                    }
-                },
-                template: '<li @click="item.finished = !item.finished" :style="{ textDecoration: getTextDecoration(item.finished)  }">{{ item.task }}</li>'
-            });
-
-            return TodoApp.mount( app_container );
         }
     },
 

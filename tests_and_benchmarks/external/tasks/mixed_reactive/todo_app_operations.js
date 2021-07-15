@@ -3,7 +3,7 @@ _pfreak.tasks.push({
     short_name: "todo_app_operations",
 
     category: "mixed_reactive",
-    description: 'Adding 10 items -> mark 5 item as finished -> clear all -> add 5 items. (10,000 repeats).',
+    description: 'Adding 10 items -> mark 5 item as finished -> clear all -> add 5 items.',
     assert_delay: 8000,
     candidates: [],
 
@@ -101,13 +101,13 @@ _pfreak.tasks.push({
                                 placeholder: "Type item here",
                             }),
                         
-                    _button = _("+button", ["Add"])
+                    _button = _("+button", "Add")
                         .css({
                             cursor: "pointer",
                             marginLeft: "0.5em",
                         })
                         .on("click", () => {
-                            _("#todo-list", [
+                            _("#todo-list", 
                                 _("+li", _input.val())
                                         .attr("class", "todo-item")
                                         .on("click", function(){
@@ -115,17 +115,17 @@ _pfreak.tasks.push({
                                                 .css("text-decoration", "line-through")
                                                 .addClass("finished");
                                         })
-                            ])
+                            )
                         }),
                     
                     _("+ol").attr("id", "todo-list"),
             
-                    _("+button", ["Clear Finished"])
+                    _("+button", "Clear Finished")
                         .on("click", () => {
                             _('li.finished').remove();
                         }),
                     
-                    _("+button", ["Clear All"])
+                    _("+button", "Clear All")
                         .css("marginLeft", "5px")
                         .on("click", () => {
                             _(".todo-item").remove();
@@ -308,7 +308,7 @@ _pfreak.tasks.push({
 
                     render(state){
 
-                        return _("+li", [state.task])
+                        return _("+li", state.task)
                             .css({
                                 textDecoration: state.finished 
                                     ? "line-through" 
@@ -348,16 +348,16 @@ _pfreak.tasks.push({
                                     (e) => state.input = e.target.value 
                                 ),
 
-                            _("+button", ["Add"])
+                            _("+button", "Add")
                                 .on( "click", () => this.addItem() ),
 
                             //Appending ToDo Item components
                             _("+ol", state.items),
                             
-                            _("+button", ["Clear Finished"])
+                            _("+button", "Clear Finished")
                                 .on( "click", () => this.clearFinished() ),
 
-                            _("+button", ["Clear All"])
+                            _("+button", "Clear All")
                                 .css("marginLeft", "1em")
                                 .on( "click", () => this.clearAll() )
                         ]);
@@ -407,21 +407,20 @@ _pfreak.tasks.push({
 
                     render(state){
 
-                        return _("+li", [state.task])
+                        return this.$.li = _("+li", state.task)
                             .css({
                                 textDecoration: state.finished 
                                     ? "line-through" 
                                     : "none" 
                             })
-                            .on( "click", () => this.onClick() );
+                            .on( "click", () => this.onClick() ).elem;
                     }
 
                     update( state, component, changed_keys, changes_count ){
-                        this.css({
-                            textDecoration: state.finished 
+                        this.$.li.style
+                            .textDecoration = state.finished 
                                 ? "line-through" 
-                                : "none" 
-                        });
+                                : "none";
                     }
 
                     onClick(){
@@ -455,16 +454,16 @@ _pfreak.tasks.push({
                                     (e) => state.input = e.target.value 
                                 ),
 
-                            _("+button", ["Add"])
+                            _("+button", "Add")
                                 .on( "click", () => this.addItem() ),
 
                             //Appending ToDo Item components
-                            _("+ol", state.items),
+                            this.$.ol = _("+ol", state.items),
                             
-                            _("+button", ["Clear Finished"])
+                            _("+button", "Clear Finished")
                                 .on( "click", () => this.clearFinished() ),
 
-                            _("+button", ["Clear All"])
+                            _("+button", "Clear All")
                                 .css("marginLeft", "1em")
                                 .on( "click", () => this.clearAll() )
                         ]);
@@ -477,7 +476,7 @@ _pfreak.tasks.push({
                             }
                             else if( "items" in changed_keys ){
                                 if( state.items.length == 0 ){
-                                    this.find("li").remove();
+                                    this.$.ol.children().remove();
                                     return;
                                 }
                             }
@@ -486,7 +485,7 @@ _pfreak.tasks.push({
                             var new_item = state.items[ state.items.length - 1 ];
 
                             if( new_item ){
-                                this.find("ol", [new_item]);
+                                this.$.ol.append(new_item);
                                 
                                 return;
                             }
@@ -1066,19 +1065,19 @@ _pfreak.tasks.push({
             return config.common_candidate_execution(config);
         },
 
-        "react_keyed": function(config){
-            return config.common_candidate_execution(config);
-        },
-
-        "react_non_keyed": function(config){
-            return config.common_candidate_execution(config);
-        },
-
         "vue_keyed": function(config){
             return config.common_candidate_execution(config);
         },
 
         "vue_non_keyed": function(config){
+            return config.common_candidate_execution(config);
+        },
+
+        "react_keyed": function(config){
+            return config.common_candidate_execution(config);
+        },
+
+        "react_non_keyed": function(config){
             return config.common_candidate_execution(config);
         }
     },

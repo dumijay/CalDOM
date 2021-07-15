@@ -1,9 +1,9 @@
 _pfreak.tasks.push({
 
-    short_name: "updating_5_of_hundred_rows",
+    short_name: "reverse_1000_rows",
 
     category: "mixed_reactive",
-    description: 'Updating 5 rows of 100 rows with new data, each containing 1 text cell with a click event and a background color. (10,000 repeats).',
+    description: 'Reversing 100 rows with new data, each containing 1 text cell with a click event and a background color.',
     assert_delay: 1000,
 
     setTaskData: function(config){
@@ -11,29 +11,21 @@ _pfreak.tasks.push({
         config.values = [];
         config.new_values = [];
 
-        config.row_count = 100;
-        
-        function getRandomValue(i, letter){
-            return {
+        config.row_count = 1000;
+
+        for( var i = 0; i < config.row_count; i++ ){
+            config.values.push({
                 key: i,
-                text: i + " : " + letter,
+                text: i + " : A",
                 r: Math.round(Math.random() * 255),
                 g: Math.round(Math.random() * 255),
                 b: Math.round(Math.random() * 255)
-            }
+            });
         }
 
-        for( var i = 0; i < config.row_count; i++ ){
-            config.values.push( getRandomValue(i, "A") );
-        }
-
-        config.new_values = [].concat(config.values);
-
-        config.new_values[10] = getRandomValue(10, "B");
-        config.new_values[20] = getRandomValue(20, "B");
-        config.new_values[30] = getRandomValue(30, "B");
-        config.new_values[40] = getRandomValue(40, "B");
-        config.new_values[50] = getRandomValue(50, "B");
+        config.new_values = [].concat(config.values).sort(function(a, b){
+            return b.key - a.key;
+        });
 
         return config;
     },
@@ -86,7 +78,7 @@ _pfreak.tasks.push({
                             config.values.map(
                                 (value) => _("+tr")
                                     .append(
-                                        _("+td", [value.text])
+                                        _("+td", value.text)
                                             .css("backgroundColor", "rgb(" + value.r + ", " + value.g + ", " + value.b + ")")
                                             .on("click", config.clickEventListener )
                                     )
@@ -179,23 +171,17 @@ _pfreak.tasks.push({
                     }
 
                     render(){
-                        // console.log("CalDom: render");
-
-                        var _table = _("+table").append(
-                            _("+tbody")
-                                .append(
-                                    this.state.values.map(
-                                        (value) => _("+tr")
-                                            .append(
-                                                _("+td", [value.text])
-                                                    .css("backgroundColor", "rgb(" + value.r + ", " + value.g + ", " + value.b + ")")
-                                                    .on("click", config.clickEventListener )
-                                            )
+                        return _("+table", 
+                            _("+tbody", 
+                                this.state.values.map(
+                                    (value) => _("+tr", 
+                                        _("+td", value.text)
+                                            .css("backgroundColor", "rgb(" + value.r + ", " + value.g + ", " + value.b + ")")
+                                            .on("click", config.clickEventListener )
                                     )
                                 )
-                        )
-                        
-                        return _table;
+                            )
+                        );
                     }
 
                     // didUpdate(){
@@ -224,34 +210,38 @@ _pfreak.tasks.push({
                     }
 
                     render(){
-                        // console.log("CalDom: render");
-
-                        var _table = _("+table").append(
-                            _("+tbody")
-                                .append(
-                                    this.state.values.map(
-                                        (value) => _("+tr")
-                                            .append(
-                                                _("+td", [value.text])
-                                                    .css("backgroundColor", "rgb(" + value.r + ", " + value.g + ", " + value.b + ")")
-                                                    .on("click", config.clickEventListener )
-                                            )
+                        return _("+table", 
+                            this.$.tbody = _("+tbody", 
+                                this.state.values.map(
+                                    (value) => _("+tr", 
+                                        _("+td", value.text)
+                                            .css("backgroundColor", "rgb(" + value.r + ", " + value.g + ", " + value.b + ")")
+                                            .on("click", config.clickEventListener )
                                     )
                                 )
-                        )
-                        
-                        return _table;
+                            ).elems[0]
+                        );
                     }
 
-                    update(){
-                        
-                        this.find("td")
-                            .text(
-                                this.state.values.map( item => item.text ) )
-                            .css( 
-                                "backgroundColor",
-                                this.state.values.map( item => "rgb(" + item.r + ", " + item.g + ", " + item.b + ")" ) 
-                            );
+                    update(state){
+                        if( this.$.tbody.children.length != this.state.values.length ){
+                            //Need to add new TRs, proceed to render()
+                            return true;
+                        }
+                
+                        var trs = Array.prototype.slice.call(this.$.tbody.children);
+                
+                        for( var i = 0; i < trs.length; i++ ){
+                            var tr = trs[i];
+                            var td = tr.firstChild;
+                            var value = this.state.values[i];
+                
+                            if( value ){
+                                //Update existing TRs with new values
+                                td.textContent = value.text;
+                                td.style.backgroundColor = "rgb(" + value.r + ", " + value.g + ", " + value.b + ")";
+                            }
+                        }
                     }
 
                     // didUpdate(){
@@ -436,17 +426,22 @@ _pfreak.tasks.push({
     candidates: {
         "vanilla_js": function(config){
             var tds = document.querySelectorAll("td");
+            
             for( var i = 0; i < tds.length; i++ ){
                 var td = tds[i];
                 var value = config.new_values[i];
 
-                td.textContent = value.text;
-                td.style.backgroundColor = "rgb(" + value.r + ", " + value.g + ", " + value.b + ")"
+                if( value ){
+                    td.textContent = value.text;
+                    td.style.backgroundColor = "rgb(" + value.r + ", " + value.g + ", " + value.b + ")";
+                }
+                else{
+                    td.parentNode.parentNode.removeChild(td.parentNode);
+                }
             }
         },
 
         "caldom": function(config){
-            
             _("td")
                 .text(
                     config.new_values.map( item => item.text ) )
@@ -460,9 +455,15 @@ _pfreak.tasks.push({
             u("td").each(function(elem, i){
                 var value = config.new_values[i];
 
-                u(elem)
-                    .text( value.text )
-                    .nodes[0].style.backgroundColor = "rgb(" + value.r + ", " + value.g + ", " + value.b + ")"
+                if( value ){
+                    u(elem)
+                        .text( value.text )
+                        .nodes[0].style.backgroundColor = "rgb(" + value.r + ", " + value.g + ", " + value.b + ")"
+                }
+                else{
+                    u(elem).parent().remove();
+                }
+                
             });
         },
 
@@ -470,9 +471,15 @@ _pfreak.tasks.push({
             $("td").each(function(i){
                 var value = config.new_values[i];
 
-                $(this)
-                    .text( value.text )
-                    .css( "backgroundColor", "rgb(" + value.r + ", " + value.g + ", " + value.b + ")" )
+                if( value ){
+                    $(this)
+                        .text( value.text )
+                        .css( "backgroundColor", "rgb(" + value.r + ", " + value.g + ", " + value.b + ")" );
+                }
+                else{
+                    $(this).parent().remove();
+                }
+                
             });
         },
 
@@ -480,9 +487,14 @@ _pfreak.tasks.push({
             jQuery("td").each(function(i){
                 var value = config.new_values[i];
 
-                jQuery(this)
-                    .text( value.text )
-                    .css( "backgroundColor", "rgb(" + value.r + ", " + value.g + ", " + value.b + ")" )
+                if( value ){
+                    jQuery(this)
+                        .text( value.text )
+                        .css( "backgroundColor", "rgb(" + value.r + ", " + value.g + ", " + value.b + ")" )
+                }
+                else{
+                    jQuery(this).parent().remove();
+                }
             });
         },
 
@@ -491,9 +503,6 @@ _pfreak.tasks.push({
             // config.preExecutedInstance.state.values = config.new_values;
             
             config.preExecutedInstance.state.values = config.new_values;
-            // config.preExecutedInstance.react({
-            //     values: config.new_values
-            // });
             // console.log("CalDom: After new state");
         },
 
@@ -503,6 +512,14 @@ _pfreak.tasks.push({
             
             config.preExecutedInstance.state.values = config.new_values;
             // console.log("CalDom: After new state");
+        },
+
+        "vue_keyed": function(config){
+            config.preExecutedInstance.values = config.new_values;
+        },
+
+        "vue_non_keyed": function(config){
+            config.preExecutedInstance.values = config.new_values;
         },
 
         "react_keyed": function(config){
@@ -519,14 +536,6 @@ _pfreak.tasks.push({
                 values: config.new_values
             });
             // console.log("React: After new state");
-        },
-
-        "vue_keyed": function(config){
-            config.preExecutedInstance.values = config.new_values;
-        },
-
-        "vue_non_keyed": function(config){
-            config.preExecutedInstance.values = config.new_values;
         }
     },
 
@@ -536,7 +545,7 @@ _pfreak.tasks.push({
         tds[10].click();
 
         for( var i = 0; i < config.new_values.length; i++ ){
-            if( tds[i].textContent != config.new_values[i].text ) throw tds[i].textContent;
+            if( tds[i].textContent != config.new_values[i].key + " : A") throw tds[i].textContent;
         }
 
         if( tds.length != config.row_count ) throw false;

@@ -3,8 +3,9 @@ _pfreak.tasks.push({
     short_name: "task_short_name",
     display_order: 0,
     category: "Category_Name",
-    description: ' (10,000 repeats).',
+    description: '',
     assert_delay: 0,
+    load_libraries: true,
 
     setTaskData: function(config){
         return config;

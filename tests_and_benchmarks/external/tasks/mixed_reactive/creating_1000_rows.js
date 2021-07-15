@@ -1,9 +1,9 @@
 _pfreak.tasks.push({
 
-    short_name: "creating_hundred_rows",
+    short_name: "creating_1000_rows",
 
     category: "mixed_reactive",
-    description: 'Creating 100 rows, each containing 1 text cell with a click event and a background color. (10,000 repeats).',
+    description: 'Creating 100 rows, each containing 1 text cell with a click event and a background color.',
     assert_delay: 1000,
 
     setTaskData: function(config){
@@ -19,7 +19,7 @@ _pfreak.tasks.push({
 
         config.values = [];
 
-        config.row_count = 100;
+        config.row_count = 1000;
 
         for( var i = 0; i < config.row_count; i++ ){
             config.values.push({
@@ -65,20 +65,20 @@ _pfreak.tasks.push({
             var container = document.createElement("div");
             document.body.appendChild( container );
 
-            _(container, [
-                _("+table", [
+            _(container, 
+                _("+table", 
                     _("+tbody",
                         config.values.map(
                             (value) => _("+tr")
                                 .append(
-                                    _("+td", [value.text])
+                                    _("+td", value.text)
                                         .css("backgroundColor", "rgb(" + value.r + ", " + value.g + ", " + value.b + ")")
                                         .on("click", config.clickEventListener )
                                 )
                         )
                     )
-                ])
-            ]);
+                )
+            );
         },
 
         "umbrellajs": function(config){
@@ -163,17 +163,17 @@ _pfreak.tasks.push({
                 }
 
                 render(){
-                    return _("+table", [
+                    return _("+table", 
                         _("+tbody", 
                             this.state.values.map(
-                                (value) => _("+tr", [
-                                    _("+td", [value.text])
+                                (value) => _("+tr", 
+                                    _("+td", value.text)
                                         .css("backgroundColor", "rgb(" + value.r + ", " + value.g + ", " + value.b + ")")
                                         .on("click", config.clickEventListener )
-                                ])
+                                )
                             )
                         )
-                    ]);
+                    );
                 }
             }
 
@@ -195,25 +195,104 @@ _pfreak.tasks.push({
                 }
 
                 render(){
-                    return _("+table", [
-                        _("+tbody", 
+                    return _("+table", 
+                        this.$.tbody = _("+tbody", 
                             this.state.values.map(
-                                (value) => _("+tr", [
-                                    _("+td", [value.text])
+                                (value) => _("+tr", 
+                                    _("+td", value.text)
                                         .css("backgroundColor", "rgb(" + value.r + ", " + value.g + ", " + value.b + ")")
                                         .on("click", config.clickEventListener )
-                                ])
+                                )
                             )
-                        )
-                    ]);
+                        ).elems[0]
+                    );
                 }
 
-                update(){ //Falling back to render() since this is just a construction test. Provided because having an update() function increases app construction duration.
-                    return true;
+                update(state){
+                    if( this.$.tbody.children.length != this.state.values.length ){
+                        //Need to add new TRs, proceed to render()
+                        return true;
+                    }
+            
+                    var trs = Array.prototype.slice.call(this.$.tbody.children);
+            
+                    for( var i = 0; i < trs.length; i++ ){
+                        var tr = trs[i];
+                        var td = tr.firstChild;
+                        var value = this.state.values[i];
+            
+                        if( value ){
+                            //Update existing TRs with new values
+                            td.textContent = value.text;
+                            td.style.backgroundColor = "rgb(" + value.r + ", " + value.g + ", " + value.b + ")";
+                        }
+                    }
                 }
             }
 
             _(container).append( new App( config.values ) );
+        },
+
+        "vue_keyed": function(config){
+            var app_container = document.createElement("div");
+
+            document.body.appendChild(
+                app_container
+            );
+            
+            var App = Vue.createApp({
+                
+                data: function(){
+                    return{
+                        values: config.values,
+                        clickEventListener: config.clickEventListener
+                    }
+                },
+    
+                template: '' 
+                    + '<table>'
+                        + '<tbody>'
+                            + '<tr v-for="value in values" :key="value.key">'
+                                + '<td :style="{ backgroundColor: \'rgb(\' + value.r + \', \' + value.g + \', \' + value.b + \')\'}" @click="clickEventListener">'
+                                    + '{{ value.text }}'
+                                + '</td>'
+                            + '</tr>'
+                        + '</tbody>'
+                    + '</table>'
+            });
+    
+            App.mount( app_container );
+        },
+
+        "vue_non_keyed": function(config){
+            var app_container = document.createElement("div");
+
+            document.body.appendChild(
+                app_container
+            );
+            
+            var App = Vue.createApp({
+                
+                data: function(){
+                    return{
+                        values: config.values,
+                        clickEventListener: config.clickEventListener
+                    }
+                },
+    
+                template: '' 
+                    + '<table>'
+                        + '<tbody>'
+                            + '<tr v-for="value in values">'
+                                + '<td :style="{ backgroundColor: \'rgb(\' + value.r + \', \' + value.g + \', \' + value.b + \')\'}" @click="clickEventListener">'
+                                    + '{{ value.text }}'
+                                + '</td>'
+                            + '</tr>'
+                        + '</tbody>'
+                    + '</table>'
+            });
+    
+            App.mount( app_container );
         },
 
         "react_keyed": function(config){
@@ -306,68 +385,6 @@ _pfreak.tasks.push({
             }
 
             ReactDOM.render( React.createElement(App, { values: config.values }), container );
-        },
-
-        "vue_keyed": function(config){
-            var app_container = document.createElement("div");
-
-            document.body.appendChild(
-                app_container
-            );
-            
-            var App = Vue.createApp({
-                
-                data: function(){
-                    return{
-                        values: config.values,
-                        clickEventListener: config.clickEventListener
-                    }
-                },
-    
-                template: '' 
-                    + '<table>'
-                        + '<tbody>'
-                            + '<tr v-for="value in values" :key="value.key">'
-                                + '<td :style="{ backgroundColor: \'rgb(\' + value.r + \', \' + value.g + \', \' + value.b + \')\'}" @click="clickEventListener">'
-                                    + '{{ value.text }}'
-                                + '</td>'
-                            + '</tr>'
-                        + '</tbody>'
-                    + '</table>'
-            });
-    
-            App.mount( app_container );
-        },
-
-        "vue_non_keyed": function(config){
-            var app_container = document.createElement("div");
-
-            document.body.appendChild(
-                app_container
-            );
-            
-            var App = Vue.createApp({
-                
-                data: function(){
-                    return{
-                        values: config.values,
-                        clickEventListener: config.clickEventListener
-                    }
-                },
-    
-                template: '' 
-                    + '<table>'
-                        + '<tbody>'
-                            + '<tr v-for="value in values">'
-                                + '<td :style="{ backgroundColor: \'rgb(\' + value.r + \', \' + value.g + \', \' + value.b + \')\'}" @click="clickEventListener">'
-                                    + '{{ value.text }}'
-                                + '</td>'
-                            + '</tr>'
-                        + '</tbody>'
-                    + '</table>'
-            });
-    
-            App.mount( app_container );
         }
     },
 
