@@ -29,11 +29,18 @@ _pfreak.tasks.push({
     
     candidates: {
         "caldom": function(config){
+            try {
+                config.caldomInstance.removeClass("");
+            } catch (error) {
+                return error
+            }
             return config.caldomInstance.removeClass( ["second-class", "third-class"] );
         }
     },
 
     assert: function(config, test_return){
+        if( test_return instanceof Error ) throw "Removing empty string as class name failed";
+        
         if( !(test_return instanceof _.Component) ) throw "Returned is not an instance of CalDOM";
         
         var inputs = document.querySelectorAll("input");

@@ -59,7 +59,7 @@ _pfreak.tasks.push({
                 render(state){
                     window.pfreak_render_count++;
         
-                    return _( "+p", [state.time] );
+                    return _( "+li", [state.time] );
                 }
                 
                 update(state){
@@ -82,6 +82,8 @@ _pfreak.tasks.push({
 
             parentApp.state.child_apps.push( new ChildApp() );
             parentApp.state.child_apps.push( new ChildApp() );
+
+            return parentApp;
         }
     },
 
@@ -90,8 +92,15 @@ _pfreak.tasks.push({
         if( document.querySelectorAll("span").length != 1 ) throw "Span not found";
         if( document.querySelectorAll("span")[0].textContent != "Child App:" ) throw "Span's text is " + document.querySelectorAll("span")[0].textContent;
 
-        if( document.querySelectorAll("p").length != 5 ) throw "P count is not 5. Actual: " + document.querySelectorAll("p").length;
-        if( document.querySelectorAll("p")[2].textContent != "asdfsdf" ) throw "p[2] text is " + document.querySelectorAll("p")[2].textContent;
+        var list_items = document.querySelectorAll("li");
+
+        if( list_items.length != 5 ) throw "P count is not 5. Actual: " + list_items.length;
+        if( list_items[2].textContent != "asdfsdf" ) throw "p[2] text is " + list_items[2].textContent;
+
+        for( var i = 0; i < list_items.length; i++ ){
+            if( list_items[i] !== test_return.state.child_apps[i].elems[0] )
+                throw "Actual DOM nodes[i] doesn't match child component's .elems[i]"
+        }
 
         if( window.pfreak_render_count != 7 ) throw "Render count is " + window.pfreak_render_count;
         if( window.pfreak_update_count != 1 ) throw "Update count is " + window.pfreak_update_count;

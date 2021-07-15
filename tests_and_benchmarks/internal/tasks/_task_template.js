@@ -5,6 +5,7 @@ _pfreak.tasks.push({
     category: "Category_Name",
     description: "",
     assert_delay: 0,
+    load_libraries: true,
 
     setTaskData: function(config){
         return config;

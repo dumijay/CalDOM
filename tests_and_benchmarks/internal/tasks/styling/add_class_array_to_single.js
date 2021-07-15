@@ -29,11 +29,17 @@ _pfreak.tasks.push({
     
     candidates: {
         "caldom": function(config){
+            try {
+                config.caldomInstance.addClass("");
+            } catch (error) {
+                return error
+            }
             return config.caldomInstance.addClass( ["new-class-one", "new-class-two"] );
         }
     },
 
     assert: function(config, test_return){
+        if( test_return instanceof Error ) throw "Adding empty string as class name failed";
         if( !(test_return instanceof _.Component) ) throw "Returned is not an instance of CalDOM";
         
         var inputs = document.querySelectorAll("input");

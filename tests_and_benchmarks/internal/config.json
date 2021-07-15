@@ -2,7 +2,7 @@
   "headless": true,
   "iteration_count": 10,
   "assert_delay": 2000,
-  "cpu_slowdown": 4,
+  "cpu_slowdown": 1,
   "library_paths": {
     "caldom": {
       "sources": [
