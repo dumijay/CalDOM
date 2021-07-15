@@ -1,8 +1,8 @@
 {
   "name": "caldom",
   "title": "CalDOM",
-  "version": "1.0.6",
-  "description": "A minimalist (3kb) JavaScript UI library inspired by jQuery & Reactive Components.",
+  "version": "1.0.7",
+  "description": "An agnostic, reactive & minimalist (3kb) JavaScript UI library with direct access to native DOM.",
   "homepage": "https://caldom.org",
   "main": "dist/caldom.min.js",
   "scripts": {
@@ -38,7 +38,7 @@
     "url": "https://github.com/dumijay/CalDom/issues"
   },
   "devDependencies": {
-    "pfreak": "^0.3.1",
+    "pfreak": "^0.3.3",
     "uglify-js": "^3.13.8"
   }
 }

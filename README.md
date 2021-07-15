@@ -1,11 +1,11 @@
 ![CalDOM JS Logo](https://www.caldom.org/images/caldom_logo.png)
 
-A minimalist (3kb) and performant JavaScript UI library inspired by jQuery & Reactive Components.
+An agnostic, reactive & minimalist (3kb) JavaScript UI library with direct access to native DOM.
 
-Instead of micromanaging everything, CalDOM let you **fully access the DOM** directly while keeping the **reactivity** 💥.
-So you could take full advantage of native APIs & even mix it with other libraries to gain superior performance & flexibility in the development process.
+Instead of pulling you into a library-specific magical world, CalDOM let you **fully access the DOM** directly while keeping the **reactivity** 💥.
+So you could take full advantage of native APIs & mix it with other libraries to gain superior performance & flexibility in the development process.
 
-In essence, CalDOM is just a wrapper around the native Node/Element. The overall performance drop is about 0.05x compared to vanilla/pure JavaScript. This is based on averaged unit level benchmarks in handling single & multiple-element instances: [View Benchmark Results](https://caldom.org/benchmark/) against Vanilla JS, jQuery, React JS, Vue &amp; more.
+In essence, CalDOM is just a wrapper around the native Node/Element. The overall performance drop is about 0.04x compared to vanilla/pure JavaScript. This is based on averaged unit level benchmarks in handling single & multiple-element instances: [View Benchmark Results](https://caldom.org/benchmark/) against Vanilla JS, jQuery, React JS, Vue &amp; more.
 
 Official site: [caldom.org](https://www.caldom.org)
 
@@ -14,36 +14,40 @@ Documentation: [caldom.org/docs/](https://caldom.org/docs/)
 # Basic Syntax
 
 ## Hello World!
+Use it as a chainable DOM traverser and a manipulator, a lightweight jQuery alternative.
+
 ```js
 _("#output-1")
     .append(
         _("+h1").text("Hello World!")
     );
 
-
-//Short form
-_( "#output-1", [ _("+h2", ["This is CalDOM."]) ]); 
+//Short append
+_( "#output-1", _("+p", "This is CalDOM.") );
 ```
 
 ## Hello World - Reactive
+Build reactive components. Use it as a lightweight React JS/Vue JS alternative.
+Not using classes, similar to React Hooks, but simpler.
+
 ```js
 var app = _().react(
     {},
     {
-        render: function(state){
-            return _("+h1")
-                .text( `Hello ${state.name}` );
-        }
+        render: state =>
+            _( "+h1", `Hello ${state.name}` ) //This is XSS safe by design
     }
 )
 
-_("#output-2").append( app );
+_("#output-2", app );
 
 //Edit below line to update state
 app.state.name = "World Reactively 💥";
 ```
 
 ## Hello World - Reactive (ES6)
+Also works as an extended ES6 class.
+
 ```js
 class HelloWorld extends _.Component{
  
@@ -54,13 +58,11 @@ class HelloWorld extends _.Component{
     }
  
     render(state){
-        return _("+div")
-                .append(
-                    _("+h1").text( "Hello " + state.name ),
-                    
-                    //Can pass children as an array too
-                    _( "+p", ["The time is: ", state.time] )
-                )
+        return _("+div", [ //Can pass children as an array too
+            _( "+h1", "Hello " + state.name ),
+            
+            _( "+p", ["The time is: ", state.time] )
+        ]);
     }
 
     tick(){
@@ -73,14 +75,44 @@ class HelloWorld extends _.Component{
  
 }
 
-let app = new HelloWorld( { name: "World!", time: "" } );
+var app = new HelloWorld( { name: "World!", time: "" } );
 
-_("#output-3").append( app );
+_("#output-3", app);
 ```
 
+## Reactive Native DOM Elements
+Native DOM Node is a first-class citizen. Also, a CalDOM instance is just a wrapper around them.
+This agnostic interoperability allows for an infinite amount of powerful integrations.
+
+```js
+var app = _().react(
+    {},
+    {
+        render: state =>{
+            let div = document.createElement("div");
+
+            let heading = document.createElement("h1");
+            heading.textContent = `I'm a reactive ${state.name}`;
+
+            div.appendChild(heading);
+
+            //.elem gives you the direct Element
+            div.appendChild( _("+h2", "💥💥💥").elem ) 
+
+            return div;
+        }
+    }
+)
+
+_("#output-3-1", app );
+
+app.state.name = "native DOM Element. 🙀";
+```
 
 ## Make existing HTML reactive
-Not a fan of rendering & virtual-DOM thingies? Use CalDOM to update pre-defined HTML content reactively.
+Not a fan of rendering & virtual-DOM thingies? Use CalDOM to update() pre-defined HTML content reactively.
+CalDOM's API is inspired by jQuery.
+
 ```js
 var person_one = _("#person-1").react(
     {},
@@ -95,11 +127,12 @@ var person_one = _("#person-1").react(
 
 //CalDOM batches these 2 state updates to only render once.
 person_one.state.name = "Jane Doe";
-person_one.state.age = 22;   
+person_one.state.age = 22;                 
 ```
 
 ## Summon the power of both worlds!
 Efficiently update() the DOM directly and/or proceed to virtual-DOM render if it's more suitable.
+Use this.$ to hold direct DOM Node references. CalDOM keeps them in sync even when render() drastically alter the DOM structure.
 
 ```js
 class Person extends _.Component{
@@ -110,29 +143,28 @@ class Person extends _.Component{
     }
 
     render(state){
-        return _("+div")
-            .append(
-                _("+h1", [ "I'm " + state.name ]),
-                _("+p", [ "I like " + state.likes.join(" & ") ])
-            );
+        return _("+div", [
+            //Saving a reference to the direct DOM Element
+            this.$.title = _( "+h1", `I'm ${state.name}` ).elem,
+            
+            _( "+p", "I like " + state.likes.join(" & ") )       
+        ]);
     }
 
     update(state, person, changed_keys, changes_count){
         
-        if( changes_count != 1 || !("name" in changed_keys) ){
+        if( changes_count != 1 || !("name" in changed_keys) )
+            // Too complex to update, proceed to render.
+            return true;
             
-            // Too complex to update,
-            return true; //to proceed to render.
-        }
-        else{ //Update changed name directly
-            this.find("h1")
-                .text( `I'm ${state.name} Directly. 🦄` );
-        }
+        else //Update name directly using the DOM reference
+            this.$.title
+                .textContent = `I'm ${state.name} Directly. 🦄`;
     }
 }
 
 var user = new Person();
-_("#output-4").append( user );
+_("#output-4", user );
 
 user.state.likes.push( "Hulk" ); //This is handled by render()
 
@@ -142,7 +174,7 @@ setTimeout( () =>
 ```
 
 ## You can even make jQuery reactive
-Basic building box of CalDOM is just native Node/Element. Thus, making it compatible with almost any library on the web.
+Basic building box of CalDOM is just native Node/Element. Thus, making it compatible with almost any DOM library on the web.
 
 ```js
 class HelloJquery extends _.Component{
@@ -150,11 +182,10 @@ class HelloJquery extends _.Component{
     constructor(){
         super();
 
-        this.react({ prompt: "Click Me!" });
+        this.react({ prompt: "" });
     }
 
     render(state){
-
         //Creating element & attaching click event using jQuery
         return $("<h1></h1>")
             .text( state.prompt )
@@ -163,8 +194,9 @@ class HelloJquery extends _.Component{
 }
 
 let app = new HelloJquery();
+_("#output-6", app);
 
-_("#output-6").append( app );
+app.state.prompt = "Click Me!" 
 ```
 
 ## CalDOM also runs on Node JS
@@ -187,14 +219,13 @@ class ServerApp extends _.Component{
     }
 
     render(state){
-        return _("+p")
+        return _("+p", state.msg)
             .css("color", "#199646")
-            .text( state.msg );
     }
 }
 
 let app = new ServerApp();
-_("body").append( app );
+_("body", app);
 
 app.react( { msg: "Hello from NodeJS " + process.version  } );
 
@@ -207,6 +238,7 @@ require("fs").writeFileSync(
 
 Visit [caldom.org](https://www.caldom.org) to experiment with many live code examples.
 
+___
 
 # Get Started
 
@@ -246,21 +278,28 @@ import _ from "./dist/caldom.min.mjs.js";
 # Contributing
 
 Your contributions are very welcome and thank you in advance.
+Please make sure to unit-test after changes.
 
 ## Key Principles
 
-* Performance and minimalism is #1 priority.
+* Performance, being agnostic(interoperability with native DOM) & minimalism is prioritized above all.
 * The richness in short-hand methods and features is secondary.
 * Supporting legacy browsers is not a priority.
 
 ## To-Do
 * ~~Implement tests~~
-* Implement helpful debug outputs for the development version
-* Thorough browser version tests
-* Further optimize virtual DOM diffing algorithm
+    * Need to expand the variety of tests to different use cases. (Currently, it's biased towards my personal coding style).
+* A beginner-friendly documentation/guide. Current one is too technical.
+* Implement helpful debug outputs for the development version.
+* Thorough browser version tests.
+* Further optimize virtual DOM diffing algorithm. [See benchmark here](https://caldom.org/benchmark/)
+    * The diffing algorithm is just 140+ lines of code.
+    * I believe there is so much room for improvement if some bright minds look at it from a fresh angle.
+
+* Need to benchmark bigger implementations (Like in a spreadsheet where each cell is a sub-component?)
 
 ## Building
-Currently the entire source code is in one file, so there isn't a huge build process other than using uglify-js to minify it.
+Currently, the entire source code is in one file. So there isn't a huge build process other than using uglify-js to minify it.
 
 This simply build the .min.js & .min.mjs.js & related .map files in the ./dist/ folder.
 

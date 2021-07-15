@@ -1,5 +1,5 @@
 /*
- * CalDom 1.0.6 - Reactive+
+ * CalDom 1.0.7 - Reactive++
  * Copyright (c) 2021 Dumi Jay
  * Released under the MIT license - https://github.com/dumijay/CalDom/
  */
@@ -24,6 +24,8 @@ var _isNodeConnected = !("isConnected" in Node.prototype)
 		return node.isConnected;
 	}
 
+var is_proxy_supported = _window.Proxy != undefined;
+
 //RequstAnimationFrame polyfill
 var _requestAnimationFramePolyfill = _window.requestAnimationFrame
 	|| _window.webkitRequestAnimationFrame
@@ -46,7 +48,7 @@ _window.Element.prototype.matches = _window.Element.prototype.matches
  * @param {String | CalDom | Node | Array<Node> | NodeList | HTMLCollection} [query_or_elems] (Optional) "+tag" creates a new Element.
  * '<tag></tag>' creates specified HTML structure. "~svg_tag" creates a SVG element.
  * Otherwise, it can be a CSS Selector, an XPath query starting with "$", a CalDom instance, a single Node/Element, an array of Nodes or a NodeList/HTMLCollection.
- * @param {Array<CalDom | Node | String>} [children_array] (Optional) Array of child elements to be passed into append(). Can be CalDom/Node/String/HTML. See append() for all possibilities.
+ * @param {CalDom | Node | String | Array<CalDom | Node | String>} [children] (Optional) Child elements to be passed into append(). Can be CalDOM/Node/String or an array of them. See append() for all possibilities.
  * This might be useful for code-clarity at render() function for reactive components. See examples at react().
  * @param {Window} [parentWindow=window] (Optional) parent_window default to current window. Use this to work with iframes or external windows.
  * @returns {CalDom} A new CalDom instance with created/found elements.
@@ -95,65 +97,20 @@ _window.Element.prototype.matches = _window.Element.prototype.matches
  * 		]
  * );
  */
-var CalDom = function(query_or_elems, children_array, parentWindow){
-	this.init(query_or_elems, children_array, parentWindow);
+var CalDom = function(query_or_elems, children, parentWindow){
+	this.init(query_or_elems, children, parentWindow);
 };
 
 CalDom.prototype = {
 
 	/**
 	 * @private
-	 * @description Context window. Set during init. Refer CalDom's constructor for details.
-	 */
-	"_w": undefined,
-
-	/**
-	 * @title elems: Array<Node>
-	 * @description Nodes/Elements of this CalDom instance.
-	 * (Note that directly changing items here is not recommended.)
-	 * @example
-	 *
-	 * //Get 3rd img element (zero-based index)
-	 * var third_img_elem = _("img").elems[2];
-	 */
-	"elems": [],
-
-	/**
-	 * @title watched: Boolean
-	 * @description Whether state changes are monitored in the reactive mode. See react() for details.
-	 */
-	"watched": undefined,
-
-	/**
-	 * @private
-	 * @description To track changed/deleted state keys. Refer usage inside react()
-	 */
-	_watch_state_changed_keys: {},
-
-	/**
-	 * @private
-	 * @description To track how many keys got changed/deleted. Refer usage inside react()
-	 */
-	_watch_state_change_count: 0,
-
-	_setMultipleMode: function(){
-		this.each = _eachMultiple;
-		this.map = _mapMultiple;
-		this.find = _findMultiple;
-		this.prop = _propMultiple;
-		this.attr = _attrMultiple;
-		this.css = _cssMultiple;
-		this.addClass = _addClassMultiple;
-		this.removeClass = _removeClassMultiple;
-	},
-
-	/**
-	 * @private
 	 * @description Internal init(). Refer CalDom's constructor
 	 */
-	init: function(selector_xpath_caldom_elems, children_array, parentWindow){
+	init: function(selector_xpath_caldom_elems, children, parentWindow){
 
 		this._w = parentWindow || window;
+		this.$ = {};
 
 		if( selector_xpath_caldom_elems ){
 			// if(selector_xpath_caldom_elems instanceof CalDom){
@@ -170,16 +127,42 @@ CalDom.prototype = {
 				this.elems = q(selector_xpath_caldom_elems, this._w.document);
 			}
 
-			if( this.elems.length != 1 ) this._setMultipleMode();
+			this.elem = this.elems[0];
+
+			if( this.elems.length != 1 ) _setMultipleMode.call(this);
 		}
 
-		if( children_array && _isArrayLike(children_array) ) insertBefore.call( this, children_array, null, _insertFunc_appendChild );
+		if( children ) this.append( children );
 
 		return this;
 	},
 
 	/**
 	 * @category Traverse
+	 * @title elems: Array<Node>
+	 * @description Nodes/Elements of this CalDom instance.
+	 * (Note that directly changing items here is not recommended.)
+	 * @example
+	 *
+	 * //Get 3rd img element (zero-based index)
+	 * var third_img_elem = _("img").elems[2];
+	 */
+	"elems": [],
+
+	/**
+	 * @category Traverse
+	 * @title elem: Node
+	 * @description First Node of this CalDom instance. .elem == .elems[0]
+	 * @example
+	 *
+	 * //Get first img element
+	 * var first_img_elem = _("img").elem;
+	 */
+	"elem": undefined,
+
+	/**
+	 * @category Traverse
+	 * @title find(selector_or_xpath)
 	 * @description Get a new CalDom instance with matching descendent elements for all elements in this CalDom instance.
 	 * Note: This could return duplicates when there are inter-connected elements in this CalDom instance.
 	 * @param {String} selector_or_xpath CSS Selector to find or XPath query starting with "$"
@@ -295,6 +278,7 @@ CalDom.prototype = {
 
 	/**
 	 * @category Iterate
+	 * @title each(callback)
 	 * @description Iterate each element in this CalDom instance with a callback.
 	 * @param {Function} callback Function to callback. Callback is called with 2 arguments: callback(elem: Node, index: Number). The enumeration stops if the callback returns false.
 	 * @returns {CalDom} Returns current CalDom instance
@@ -308,6 +292,7 @@ CalDom.prototype = {
 
 	/**
 	 * @category Iterate
+	 * @title map(callback)
 	 * @description Iterate each element in this CalDom instance with a callback and get an array of callback's returned values.
 	 * @param {Function} callback Function to callback. Callback is called with 2 arguments: callback(elem: Node, index: Number).
 	 * @returns {Array} An array of values returned by the callback.
@@ -396,6 +381,7 @@ CalDom.prototype = {
 
 	/**
 	 * @category Manipulate/Retrieve Content
+	 * @title attr(...)
 	 * @description Get or set attribute(s) of elements in this CalDom instance.
 	 * @param {String | Object} key_or_key_values Attribute name as a String or { key: value, ... } object to set multiple attributes
 	 * @param {any | Array<String | Number>} [val_or_val_array] (Optional) Value or array of values to be assigned at corresponding n-th element.
@@ -422,6 +408,7 @@ CalDom.prototype = {
 
 	/**
 	 * @category Manipulate/Retrieve Content
+	 * @title prop(...)
 	 * @description Get or set variable(s) at elements' root. Other than assigning custom data of any type at elements' root, this can be used to access all properties/attributes of elements as well.
 	 * Warning: Look out for untracked circular references that might lead to memory leaks.
 	 * @param {String | Object} key_or_key_values Variable name as a String or { key: value, ... } object to set multiple variables.
@@ -487,6 +474,7 @@ CalDom.prototype = {
 
 	/**
 	 * @category CSS Styling
+	 * @title css(....)
 	 * @description Get & set CSS style rule(s) of elements in this CalDom instance.
 	 * @param {String | Object} key_or_key_values CSS property name or { property: value, ... } object to set multiple rules
 	 * @param {String | Number | Array<String | Number>} val_or_val_array CSS value or an array of values to be set at n-th element for the given CSS property name.
@@ -514,6 +502,7 @@ CalDom.prototype = {
 
 	/**
 	 * @category CSS Styling
+	 * @title addClass(class_names)
 	 * @description Add class name(s) to elements in this CalDom instance.
 	 * @param {String | Array} class_names A single class name or multiple class names separated by spaces or as an array.
 	 * @returns {CalDom} Returns this CalDom instance.
@@ -533,6 +522,7 @@ CalDom.prototype = {
 
 	/**
 	 * @category CSS Styling
+	 * @title removeClass(class_names)
 	 * @description Remove class name(s) from elements in this CalDom instance.
 	 * @param {String | Array} class_names A single class name or multiple class names separated by spaces or as an array.
 	 * @returns {CalDom} Returns this CalDom instance.
@@ -551,6 +541,7 @@ CalDom.prototype = {
 
 	/**
 	 * @category CSS Styling
+	 * @title show([display_value])
 	 * @description Set display CSS property of all elements in this CalDom instance.
 	 * @param {String} [display_value] (optional) Display value. Default to "block"
 	 * @returns {CalDom} Returns this CalDom instance.
@@ -568,6 +559,7 @@ CalDom.prototype = {
 
 	/**
 	 * @category CSS Styling
+	 * @title hide()
 	 * @description Set display CSS property of all elements in this CalDom instance to "None".
 	 * @returns {CalDom} Returns this CalDom instance.
 	 * @example
@@ -618,7 +610,7 @@ CalDom.prototype = {
 	 * @returns {CalDom} Returns this CalDom instance.
 	 * @example
 	 * //Remove click event listener
-	 * _("div-id").off("click", clickEven-thandler);
+	 * _("div-id").off("click", clickEventHandler);
 	 *
 	 * //Remove mousemove and touchmove event listeners
 	 * _("div-id").off("mousemove touchmove", moveHandler);
@@ -690,6 +682,18 @@ CalDom.prototype = {
 	 *
 	 * //Move existing <p> elements from "container-a" to "container-b"
 	 * _("#container-b").append( _("#container-a p") );
+	 * 
+	 * //Short form of append:
+	 * 
+	 * //Appending empty Paragrapgh to the body
+	 * _( "body", _("+p") );
+	 * 
+	 * //Appending multiple elements to the body
+	 * _( "body", [
+	 * 	_("+p", "Para Text"), 
+	 * 	document.createElement("div"),
+	 * 	"Text Node"
+	 * ]);
 	 */
 	"append": function(elems_or_caldom){
 		return insertBefore.call(this, _isArrayLike(elems_or_caldom) ? elems_or_caldom : arguments, null, _insertFunc_appendChild);
@@ -743,7 +747,8 @@ CalDom.prototype = {
 		});
 
 		this.elems = [];
-		this._setMultipleMode();
+		this.elem = undefined;
+		_setMultipleMode.call(this);
 
 		this._didUnmount(true);
 
@@ -881,7 +886,8 @@ CalDom.prototype = {
 	 * Calling react() with a brand new state execute render() synchronously. Eg: app.react( new_state );
 	 *
 	 * @param {Function} [config.update] (Optional, if render() is given) If an update() function is present, CalDom will execute it instead of render(). (Intial render() get executed regardless).
-	 * Manually updating DOM changes is obviously more performant than a render() based virtual-DOM approach. Also, it is useful to update existing non-javascript originated(.html file based) HTML structures reactively.
+	 * Manually updating DOM changes directly by accessing the native DOM API is obviously more performant than a render() based virtual-DOM approach. Set this.$ references at render() to access the native Nodes directly. Refer this.$ below for details.
+	 * Also, update() is useful to update existing non-javascript originated(.html file based) HTML structures reactively.
 	 * If the update() returns true, CalDom will also execute render() and proceed with virtual-real DOM comparison and apply subsequent changes.
 	 * 
 	 * update(
@@ -901,6 +907,7 @@ CalDom.prototype = {
 	 *
 	 * @param {Boolean} [config.watched=true] (Optional) True by default. If false, CalDom will not react to state changes automatically. Call react() manually after changing state.
 	 * CalDom is using Javascript Proxies to detect state changes. Browser versions released before 2016 may not support it natively. Implement a pollyfil for older browsers or you can call react() manually after state changes.
+	 * (Note that Proxy pollyfils require variable to be defined in advance.)
 	 * If Proxy is not supported caldom.watched will set to false despite initially setting config.watched = true.
 	 * If you chose not to use the Proxy for some reason, you can call .react() after state changes. There is no performance hit by calling it repetedly because CalDom is using requestAnimationFrame to batch DOM updates efficiently.
 	 * Also, calling react() manually immediately after state changes does not cause a re-render even when Proxy is supported.
@@ -921,11 +928,11 @@ CalDom.prototype = {
 	 *
 	 * //Hello World Component (non-class based approach)
 	 * var helloWorldApp = _().react(
-	 *			{ name: "World!" },
-	 *			{
-	 *				render: (state) => _("+h1").text( "Hello " + state.name )
-	 *			}
-	 *		);
+	 *		{ name: "World!" },
+	 *		{
+	 *			render: (state) => _("+h1", "Hello " + state.name )
+	 *		}
+	 *	);
 	 *
 	 * _("body").append( helloWorldApp );
 	 *
@@ -934,18 +941,18 @@ CalDom.prototype = {
 	 * //Hello World Component (Class based approach)
 	 * class HelloWorldApp extends _.Component{
 	 *
-	 *		constructor(state){
-	 *			super();
-	 *		  	this.react(state); //this == CalDom instance
-	 *		}
+	 *	constructor(state){
+	 *		super();
+	 *	  	this.react(state); //this == CalDom instance
+	 *	}
 	 *
-	 *		render(state){ //state is a shortcut to this.state
-	 *			return _("+h1").text( "Hello " + state.name );
-	 *		}
+	 *	render(state){ //state is a shortcut to this.state
+	 *		return _("+h1", "Hello " + state.name );
+	 *	}
 	 * }
 	 *
 	 * var app = new HelloWorldApp({ name: "World!" });
-	 * _("body").append( app );
+	 * _("body", app );
 	 *
 	 * app.state.name = "CalDom";
 	 *
@@ -961,42 +968,42 @@ CalDom.prototype = {
 	 * 
 	 * //Combine the power of both render() & update()
 	 * var helloWorld = _("#main-heading").react(
-	 * 		{ name : "World!", visible: false },
-	 * 		{
-	 * 			render: (state, component) => {
-	 * 				var heading = _("+h1", [ "Hello " + state.name ] );
-	 * 				
-	 * 				if( state.visible ) heading.addClass("visible");
-	 * 				return heading;
-	 * 			},
-	 * 
-	 * 			update: (state, component, changed_keys, state_change_count) => {
-	 * 				if( state_change_count == 1 && "visibility" in changed_keys ){
-	 * 					
-	 * 					//Directly & efficiently update DOM without going through Virtual-DOM
-	 * 					if( state.visible ) this.addClass("visible");
-	 * 					else this.removeClass("visible");
-	 * 				}
-	 * 				else{
-	 * 					//If the changes are too complex, proceed to render() via Virtual-DOM
-	 * 					return true;
-	 * 				}
-	 * 			}
-	 * 		}
+	 *	{ name : "World!", visible: false },
+	 *	{
+	 *		render: function(state){
+	 *			return this.$.h1 = _("+h1", "Hello " + state.name )
+	 *				.addClass( state.visible ? "visible" : "").elem;
+	 *		},
+	 *
+	 *		update: function(state, component, changed_keys, state_change_count){
+	 *			if( state_change_count == 1 && "visible" in changed_keys ){
+	 *				
+	 *				//Directly & efficiently update DOM without going through Virtual-DOM
+	 *				if( state.visible ) this.$.h1.classList.add("visible");
+	 *				else this.$.h1.classList.remove("visible");
+	 *			}
+	 *			else{
+	 *				//If the changes are too complex, proceed to render() via Virtual-DOM
+	 *				return true;
+	 *			}
+	 *		}
+	 *	}
 	 * );
 	 *
-	 * helloWorld.state.visible = true;
+	 * setTimeout( () =>
+	 *	helloWorld.state.visible = true //This is handled by update()
+	 * , 1000);
 	 * 
 	 * //Manual reactive approach (without automatic update on state change)
 	 * var helloWorldApp = _().react(
 	 *     { name: "World!" },
 	 *     {
-	 *         render: (state) => _("+h1").text( "Hello " + state.name ),
+	 *         render: (state) => _("+h1", "Hello " + state.name ),
 	 *         watched: false //Disabling automatic state changes watch
 	 *     }
 	 * );
 	 *
-	 * _("body").append( helloWorldApp );
+	 * _("body", helloWorldApp );
 	 * helloWorldApp.state.name = "CalDom!";
 	 *
 	 * //Calling react() manually after state change
@@ -1014,7 +1021,7 @@ CalDom.prototype = {
 
 		if( _this["watched"] && is_zero_arguments ) return _this;
 
-		// Using requestAnimationFrame() to avoid rendering bursts for multiple variable changes (Proxy setter fires at every change in .state watch mode).
+		// Using requestAnimationFrame() to avoid rendering bursts for multiple variable changes (Proxy setter fires at every change in watched mode).
 		if( _is_watched_updated || (is_zero_arguments && !_is_request_animation_frame) ){
 			
 			if( _this["update"] ){
@@ -1055,7 +1062,7 @@ CalDom.prototype = {
 				// if( config["didUpdate"] != undefined ) _this["didUpdate"] = config["didUpdate"];
 			}
 
-			if( !this._w["Proxy"] ) _this["watched"] = false; //Silently failing
+			if( !is_proxy_supported ) _this["watched"] = false; //Silently failing
 
 			if( state != undefined ){
 				if( _this["watched"] != false ){
@@ -1071,7 +1078,7 @@ CalDom.prototype = {
 
 		_this._z = null;
 
-		var current_first_elem = _this.elems[0];
+		var current_first_elem = _this.elem;
 		var has_first_elem = !!current_first_elem;
 
 		if( !_this._mounted && !_mounting ){
@@ -1101,6 +1108,7 @@ CalDom.prototype = {
 		if( is_parent_re_react_call ){
 			var cloned_root = current_first_elem.cloneNode(true);
 			cloned_root["_h"] = _this;
+			cloned_root.setAttribute("caldom", ""); //This is used by _replace() to swap back to the _original_root
 			cloned_root._original_root = current_first_elem;
 
 			_this._v = [ cloned_root ]; //To preserve old_dom children when the new virtual-dom appendChild()
@@ -1113,15 +1121,56 @@ CalDom.prototype = {
 			if( new_dom instanceof CalDom ) new_dom = new_dom.elems[0];
 
 			new_dom["_h"] = _this; //_h for DOM handler
+			new_dom.setAttribute("caldom", ""); //This is to avoid unnecessary diffing at _replace() on cloned nodes
 
 			if( !current_first_elem ){
 				_this.elems = [new_dom];
+				this.elem = this.elems[0];
+
+				//TODO: move this outside
+				function _setElemReference(obj, key, value){
+					var elem = value instanceof CalDom ? value.elems[0] : value;
+					
+					if( elem instanceof Element && !elem["_$k"] ){
+						elem["_$o"] = obj;
+						elem["_$k"] = key;
+						elem["_$v"] = value;
+
+						elem.setAttribute("_ref", key);
+					}
+				}
+
+				for( var key in _this["$"] ){
+					_setElemReference(_this["$"], key, _this["$"][key]);
+				}
+
+				if( is_proxy_supported ){
+					// This is initialized after first render
+					// because Proxy polyfills need to know keys in advance
+					// With a Polyfilled Proxy, keys defined after the first render 
+					// will not be swapped by _replace()
+					_this["$"] = new Proxy(
+						_this["$"],
+						{
+							set: function(obj, key, value){
+								_setElemReference(obj, key, value);
+
+								if( !obj[key] ){ 
+									obj[key] = value;
+								}
+			
+								return true;
+							}
+						}
+					)
+				}
 			}
 			else {
-				var new_root = _replace( new_dom, current_first_elem, current_first_elem );
+
+				var new_root = _replace( new_dom, current_first_elem, current_first_elem, _this );
 
 				if( new_root ){
-					_this.elems[0] = new_root; //Note that only elems[0] is considered. Ideally all components only must have one element as the root.
+					_this.elem = new_root; //Note that only elems[0] is considered. Ideally all components only must have one element as the root.
 				}
 			}
 
@@ -1130,7 +1179,59 @@ CalDom.prototype = {
 		}
 
 		return _this;
-	}
+	},
+
+	/**
+	 * @category Manipulate DOM Tree
+	 * @title watched: Boolean
+	 * @description Whether state changes are monitored in the reactive mode. See react() for details.
+	 */
+	"watched": undefined,
+
+	/**
+	 * @category Manipulate DOM Tree
+	 * @title this.$: Object
+	 * @description Reference holder for CalDOM or Node appended to the DOM. This can be used to keep CalDOM or direct DOM Node references in sync even when the render() drastically modify the DOM structure.
+	 * If referenced, an attribute named "_ref" will be added to the Element. This is to track & update references when elements get moved/replaced by virtual-DOM diffing algorithm. (Sync requires native Proxy support or a polyfill).
+	 * @example
+	 * var helloWorld = _("#main-heading").react(
+	 *	{ name : "World!" },
+	 *	{
+	 *		render: function(state){
+	 *			return this.$.h1 = _("+h1", "Hello " + state.name ).elem; //Note this.$.h1 =
+	 *		},
+	 *
+	 *		update: function(state){
+	 *			// Using referenced native DOM Element $.h1
+	 * 			// to directly update text
+	 * 			this.$.h1.textContent = "Hello " + state.name;
+	 *		}
+	 *	}
+	 * );
+	 *
+	 * setTimeout( () =>
+	 *	helloWorld.state.name = "CalDOM" //This is handled by update()
+	 * , 1000);
+	 */
+	"$": undefined,
+
+	/**
+	 * @private
+	 * @description Context window. Set during init. Refer CalDom's constructor for details.
+	 */
+	"_w": undefined,
+
+	/**
+	 * @private
+	 * @description To track changed/deleted state keys. Refer usage inside react()
+	 */
+	_watch_state_changed_keys: {},
+
+	/**
+	 * @private
+	 * @description To track how many keys got changed/deleted. Refer usage inside react()
+	 */
+	_watch_state_change_count: 0
 
 	//TODO: Add .shadow({}) (or something similar?) to support Shadow DOM
 
@@ -1145,6 +1246,8 @@ CalDom.prototype = {
  */
  function _copyProps(new_dom_node, old_dom_node, enumerate_children){
 	//TODO: Make sure this is all common cases. Is it? Also, how about implementing Object.assign()?
+
+	// if( new_dom_node._original_root ) return; // new_dom_node is a Sub-Component and its instance will take care of diffing.
 	
 	if( Object.getPrototypeOf(old_dom_node).hasOwnProperty("value") ){ //Because some of these exists in Elements other than HTMLInputElement like <Button>
 		if( old_dom_node.value != new_dom_node.value ) old_dom_node.value = new_dom_node.value;
@@ -1175,21 +1278,35 @@ CalDom.prototype = {
  */
  function _replace(new_dom_node, old_dom_node, old_dom_node_parent){
 	if( !new_dom_node ) return;
+	
+	// if( new_dom_node._original_root ) return; // new_dom_node is a Sub-Component and its instance will take care of diffing.
 
-	if( new_dom_node._original_root ) new_dom_node = new_dom_node._original_root;
-
+	var is_new_dom_node_an_element = new_dom_node.nodeType == 1;
+	
 	if( !old_dom_node ){
+		if( is_new_dom_node_an_element ) _swapClonedHandlers(new_dom_node);
 		return old_dom_node_parent.appendChild( new_dom_node );
 	}
+	
+	var is_new_dom_node_a_clone;
+	var new_dom_node_handler;
+	
+	if( new_dom_node._original_root != undefined ){
+		is_new_dom_node_a_clone = true;
+		new_dom_node_handler = new_dom_node._original_root["_h"];
+	}
+	else{
+		new_dom_node_handler = new_dom_node["_h"];
+	}
 
-	var new_dom_node_is_a_element = new_dom_node.nodeType == 1;
-
-	var soft_replacable = new_dom_node_is_a_element 
+	var soft_replacable = is_new_dom_node_an_element 
 		&& new_dom_node.tagName == old_dom_node.tagName //Assuming a drastically different tree, thus a hard replace is efficient.
-		&& new_dom_node["_h"] === old_dom_node["_h"] //Assuming enequal Component instances and keys are different elements (with their own custome properties & event listeners), thus a hard replace is required. 
+		&& new_dom_node_handler === old_dom_node["_h"] //Assuming enequal Component instances and keys are different elements (with their own custome properties & event listeners), thus a hard replace is required. 
 		&& new_dom_node.getAttribute("caldom-v") === old_dom_node.getAttribute("caldom-v");
 
 	if( soft_replacable ){
+
+		if( is_new_dom_node_a_clone ) new_dom_node = new_dom_node._original_root;
 		
 		var copy_props_recursively = true;
 
@@ -1199,7 +1316,7 @@ CalDom.prototype = {
 			var new_dom_has_child_nodes = new_dom_node.hasChildNodes();
 
 			if( new_dom_has_child_nodes || old_dom_node.hasChildNodes() ){
-				var old_dom_node_child_nodes = (old_dom_node.childNodes);  //Keeping the live list so it adjusts automatically with Node.replaceChild()
+				var old_dom_node_child_nodes = old_dom_node.childNodes;  //Keeping the live list so it adjusts automatically with Node.replaceChild()
 				var i = 0;
 
 				if( new_dom_has_child_nodes ){
@@ -1214,27 +1331,37 @@ CalDom.prototype = {
 					//TODO: re-order based on key first, then prepend missing keys and proceed to to rest of the tree walk? (efficiency to be tested)
 					for( ; i < len; i++ ){
 
-						var replaced_elem = _replace(new_dom_node_child_nodes[i], old_dom_node_child_nodes[i], old_dom_node);
-						
-						if( replaced_elem && replaced_elem["_h"] ){
-							replaced_elem["_h"].elems[0] = replaced_elem;
+						var new_child = new_dom_node_child_nodes[i];
+
+						if( _replace(new_child, old_dom_node_child_nodes[i], old_dom_node) && new_child.nodeType == 1 ){
+							var refs = _slice.call( new_child.querySelectorAll('* [_ref]') );
+							refs.push( new_child );
+
+							for(var ref_i = 0, ref_count = refs.length; ref_i < ref_count; ref_i++ ){
+								var elem = refs[ref_i];
+								var key = elem["_$k"];
+
+								if(key){
+									elem["_$o"][key] = elem["_$v"];
+								}
+							}
 						}
 					}
 				}
 
 				//Finally, if the old_dom_element is containing children not present in the new_dom_element, remove them
-				for( ; i < old_dom_node_child_nodes.length; i++ ){
+				for( var remaining = old_dom_node_child_nodes.length; i < remaining; i++ ){
 					
-					var old_dom_node_child = old_dom_node_child_nodes[i];
-					
-					var fire_unmount_events = old_dom_node_child["_h"] != undefined;
-					
-					if( fire_unmount_events ) old_dom_node_child["_h"]._willUnmount();
+					if( old_dom_node.lastChild["_h"] ){
+						if( fire_unmount_events ) old_dom_node.lastChild["_h"]._willUnmount();
 
-					old_dom_node.removeChild( old_dom_node_child );
-					i--;
-
-					if( fire_unmount_events ) old_dom_node_child["_h"]._didUnmount();
+						old_dom_node.removeChild( old_dom_node.lastChild );
+	
+						if( fire_unmount_events ) old_dom_node.lastChild["_h"]._didUnmount();
+					}
+					else{
+						old_dom_node.removeChild( old_dom_node.lastChild );
+					}
 
 				}
 			}
@@ -1266,9 +1393,9 @@ CalDom.prototype = {
 		
 		_copyProps( new_dom_node, old_dom_node, copy_props_recursively );
 	}
-	else if( !new_dom_node.isEqualNode(old_dom_node) ){
+	else{
 
-		if( !new_dom_node_is_a_element ){
+		if( !is_new_dom_node_an_element ){
 			old_dom_node.nodeValue = new_dom_node.nodeValue;
 		}
 		else{ //Hard Replace
@@ -1278,13 +1405,43 @@ CalDom.prototype = {
 
 			if( fire_unmount_events ) old_dom_node["_h"]._willUnmount();
 
-			old_dom_node.parentNode.replaceChild( new_dom_node, old_dom_node );
+			if( is_new_dom_node_an_element ) _swapClonedHandlers(new_dom_node);
+			
+			old_dom_node.parentNode.replaceChild(
+				is_new_dom_node_a_clone ? new_dom_node._original_root : new_dom_node, 
+				old_dom_node 
+			);
 
 			if( fire_unmount_events ) old_dom_node["_h"]._didUnmount();
 			
 			return new_dom_node;
 		}
 	}
+}
+
+function _swapClonedHandlers(new_dom_node){
+	var cloned_handler_nodes = _slice.call( new_dom_node.querySelectorAll("* [caldom]") );
+		
+	for( var i = 0, count = cloned_handler_nodes.length; i < count; i++ ){
+		var cloned_node = cloned_handler_nodes[i];
+		
+		var original_root_parent = cloned_node._original_root.parentNode;
+		var original_root_next_sibling = cloned_node._original_root.nextSibling;
+
+		cloned_node.parentNode.replaceChild( cloned_node._original_root, cloned_node );
+		original_root_parent.insertBefore( cloned_node, original_root_next_sibling );
+	}
+}
+
+function _setMultipleMode(){
+	this.each = _eachMultiple;
+	this.map = _mapMultiple;
+	this.find = _findMultiple;
+	this.prop = _propMultiple;
+	this.attr = _attrMultiple;
+	this.css = _cssMultiple;
+	this.addClass = _addClassMultiple;
+	this.removeClass = _removeClassMultiple;
 }
 
 /**
@@ -1376,8 +1533,7 @@ function insertBefore(element_or_elements_or_caldom, before_elem_or_caldom, _ins
 				 }
 			}
 
-			var elem = this.elems[0];
-			if( before_elem_or_caldom === undefined ) before_elem_or_caldom = elem.firstChild;
+			if( before_elem_or_caldom === undefined ) before_elem_or_caldom = this.elem.firstChild;
 
 			for( var elem_i = 0, new_elems_length = new_elems.length; elem_i < new_elems_length; elem_i++ ){
 				var new_elem = new_elems[elem_i];
@@ -1388,7 +1544,7 @@ function insertBefore(element_or_elements_or_caldom, before_elem_or_caldom, _ins
 				}
 
 				_insertFunc.call(
-					elem,
+					this.elem,
 					new_elem,
 					before_elem_or_caldom
 				);
@@ -1488,7 +1644,7 @@ function _isArrayLike(obj){
 }
 
 function _eachSingle(callback){
-	callback.call(this.elems[0], this.elems[0], 0);
+	callback.call(this.elem, this.elem, 0);
 }
 
 function _eachMultiple(callback){
@@ -1505,20 +1661,20 @@ function _propSingle(key_or_key_values, val_or_val_array, _is_internal_call){
 	if( !_is_internal_call && typeof key_or_key_values != 'string' ) {
 
 		for(var key in key_or_key_values){
-			this.elems[0][key] = key_or_key_values[key];
+			this.elem[key] = key_or_key_values[key];
 		}
 	}
 	else if( val_or_val_array != undefined ) {
 
 		if( Array.isArray(val_or_val_array) ){
-			this.elems[0][key_or_key_values] = val_or_val_array[0];
+			this.elem[key_or_key_values] = val_or_val_array[0];
 		}
 		else{
-			this.elems[0][key_or_key_values] = val_or_val_array;
+			this.elem[key_or_key_values] = val_or_val_array;
 		}
 	}
 	else {
-		return [ this.elems[0][key_or_key_values]];
+		return [ this.elem[key_or_key_values]];
 	}
 
 	return this;
@@ -1561,21 +1717,21 @@ function _cssSingle(key_or_key_values, val_or_val_array){
 
 	if( typeof key_or_key_values != 'string' ) {
 		for(var key in key_or_key_values){
-			this.elems[0].style[key] = key_or_key_values[key];
+			this.elem.style[key] = key_or_key_values[key];
 		}
 	}
 	else if( val_or_val_array != undefined ) {
 
 		if( Array.isArray(val_or_val_array) ){
-			this.elems[0].style[key_or_key_values] = val_or_val_array[0];
+			this.elem.style[key_or_key_values] = val_or_val_array[0];
 		}
 		else{
-			this.elems[0].style[key_or_key_values] = val_or_val_array;
+			this.elem.style[key_or_key_values] = val_or_val_array;
 		}
 	}
 	else {
 
-		return [ this.elems[0].style[key_or_key_values] ];
+		return [ this.elem.style[key_or_key_values] ];
 	}
 
 	return this;
@@ -1618,21 +1774,21 @@ function _attrSingle(key_or_key_values, val_or_val_array){
 
 	if( typeof key_or_key_values != 'string' ) {
 		for(var key in key_or_key_values){
-			this.elems[0].setAttribute( key, key_or_key_values[key] );
+			this.elem.setAttribute( key, key_or_key_values[key] );
 		}
 	}
 	else if(arguments.length == 2) {
 
 		if( Array.isArray(val_or_val_array) ){
-			this.elems[0].setAttribute(key_or_key_values, val_or_val_array[0]);
+			this.elem.setAttribute(key_or_key_values, val_or_val_array[0]);
 		}
 		else{
-			this.elems[0].setAttribute(key_or_key_values, val_or_val_array);
+			this.elem.setAttribute(key_or_key_values, val_or_val_array);
 		}
 	}
 	else {
 
-		return [ this.elems[0].getAttribute(key_or_key_values) ];
+		return [ this.elem.getAttribute(key_or_key_values) ];
 
 	}
 
@@ -1679,18 +1835,21 @@ function _addClassListElem(elem, classes){
 }
 
 function _addClassSingle(class_names){
-	var classes = _getSpaceSeparatedArray(class_names);
-
-	_addClassListElem( this.elems[0], classes );
+	if( class_names ){ //To avoid throwing on empty string and this is also false for empty arrays :)
+		_addClassListElem( this.elem, _getSpaceSeparatedArray(class_names) );
+	}
 
 	return this;
 }
 
 function _addClassMultiple(class_names){
+	if( class_names ){ //To avoid throwing on empty string and this is also false for empty arrays :)
+		var classes = _getSpaceSeparatedArray(class_names);
 
-	this.each(function(elem){
-		_addClassListElem( elem, _getSpaceSeparatedArray(class_names) );
-	});
+		this.each(function(elem){
+			_addClassListElem( elem, classes );
+		});
+	}
 
 	return this;
 }
@@ -1702,24 +1861,27 @@ function _removeClassListElem(elem, classes){
 }
 
 function _removeClassSingle(class_names){
-
-	_removeClassListElem( this.elems[0], _getSpaceSeparatedArray(class_names) );		
+	if( class_names ){ //To avoid throwing on empty string and this is also false for empty arrays :)
+		_removeClassListElem( this.elem, _getSpaceSeparatedArray(class_names) );
+	}
 
 	return this;
 }
 
 function _removeClassMultiple(class_names){
-	var classes = _getSpaceSeparatedArray(class_names);
+	if( class_names ){ //To avoid throwing on empty string and this is also false for empty arrays :)
+		var classes = _getSpaceSeparatedArray(class_names);
 
-	this.each(function(elem){
-		_removeClassListElem(elem, classes);		
-	});
+		this.each(function(elem){
+			_removeClassListElem(elem, classes);		
+		});
+	}
 
 	return this;
 }
 
 function _mapSingle(callback){
-	return [ callback(this.elems[0], 0) ];
+	return [ callback(this.elem, 0) ];
 }
 
 function _mapMultiple(callback){
@@ -1733,7 +1895,7 @@ function _mapMultiple(callback){
 }
 
 function _findSingle(selector_or_xpath){
-	return new CalDom( q(selector_or_xpath, this.elems[0]), undefined, this._w );
+	return new CalDom( q(selector_or_xpath, this.elem), undefined, this._w );
 }
 
 function _findMultiple(selector_or_xpath){
@@ -1775,7 +1937,7 @@ calDom["Component"] = CalDom;
  *
  * var version = _.version;
  */
- calDom["version"] = "1.0.6"
+ calDom["version"] = "1.0.7"
 
 if( typeof module != 'undefined' && module.exports ){
 	module.exports = calDom;

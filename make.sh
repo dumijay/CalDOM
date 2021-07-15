@@ -18,4 +18,6 @@ wc -c "./dist/caldom.min.js.gz"
 
 rm "./dist/caldom.min.js.gz"
 
+# npm test
+
 # uglifyjs "./dist/caldom.min.js" --beautify --output "./dist/caldom.min.beautiful.js" 
