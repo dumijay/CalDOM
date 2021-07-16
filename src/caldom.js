@@ -132,7 +132,7 @@ CalDom.prototype = {
 			if( this.elems.length != 1 ) _setMultipleMode.call(this);
 		}
 
-		if( children ) this.append( children );
+		if( children != null ) this.append( children );
 
 		return this;
 	},
@@ -1513,7 +1513,7 @@ function insertBefore(element_or_elements_or_caldom, before_elem_or_caldom, _ins
 
 		for(var i = 0, len = element_or_elements_or_caldom.length; i < len; i++){
 			var this_item = element_or_elements_or_caldom[i];
-			if( !this_item ) continue;
+			if( this_item == null ) continue;
 
 			var new_elems;
 
@@ -1537,7 +1537,7 @@ function insertBefore(element_or_elements_or_caldom, before_elem_or_caldom, _ins
 
 			for( var elem_i = 0, new_elems_length = new_elems.length; elem_i < new_elems_length; elem_i++ ){
 				var new_elem = new_elems[elem_i];
-				if( !new_elem ) continue;
+				if( new_elem == null ) continue;
 
 				if( typeof new_elem != 'object' ){
 					new_elem = this._w.document.createTextNode( new_elem );
