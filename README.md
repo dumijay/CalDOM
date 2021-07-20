@@ -31,7 +31,7 @@ Build reactive components. Use it as a lightweight React JS/Vue JS alternative.
 Not using classes, similar to React Hooks, but simpler.
 
 ```js
-var app = _().react(
+let app = _().react(
     {},
     {
         render: state =>
@@ -75,7 +75,7 @@ class HelloWorld extends _.Component{
  
 }
 
-var app = new HelloWorld( { name: "World!", time: "" } );
+let app = new HelloWorld( { name: "World!", time: "" } );
 
 _("#output-3", app);
 ```
@@ -85,7 +85,7 @@ Native DOM Node is a first-class citizen. Also, a CalDOM instance is just a wrap
 This agnostic interoperability allows for an infinite amount of powerful integrations.
 
 ```js
-var app = _().react(
+let app = _().react(
     {},
     {
         render: state =>{
@@ -114,7 +114,7 @@ Not a fan of rendering & virtual-DOM thingies? Use CalDOM to update() pre-define
 CalDOM's API is inspired by jQuery.
 
 ```js
-var person_one = _("#person-1").react(
+let person_one = _("#person-1").react(
     {},
 
     {
@@ -163,7 +163,7 @@ class Person extends _.Component{
     }
 }
 
-var user = new Person();
+let user = new Person();
 _("#output-4", user );
 
 user.state.likes.push( "Hulk" ); //This is handled by render()
@@ -247,6 +247,7 @@ ___
 ```html
 <script src="https://unpkg.com/caldom"></script>
 ```
+CalDOM is using '_' variable as a global short-hand by default. To use a different alias, set window['_cal_dom_alias'] = 'different_alias' before loading it.
 
 ## Download
 
@@ -262,7 +263,7 @@ npm install caldom
 
 ```js
 //CalDOM also runs on Node JS with js-dom
-var _ = require('caldom');
+const _ = require('caldom');
 ```
 
 ```js
