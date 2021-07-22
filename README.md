@@ -7,6 +7,8 @@ So you could take full advantage of native APIs & mix it with other libraries to
 
 A 2-in-1 virtual-DOM & no-virtual-DOM approach if you will.
 
+0️⃣ Zero tooling,  0️⃣ zero dependencies,  0️⃣ zero new syntax, just pure JS.
+
 In essence, CalDOM is just a wrapper around the native Node/Element. The overall performance drop is about 0.04x compared to vanilla/pure JavaScript. This is based on averaged unit level benchmarks in handling single & multiple-element instances: [View Benchmark Results](https://caldom.org/benchmark/) against Vanilla JS, jQuery, React JS, Vue &amp; more.
 
 Official site: [caldom.org](https://www.caldom.org)
