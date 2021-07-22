@@ -15,8 +15,6 @@ Official site: [caldom.org](https://www.caldom.org)
 
 Documentation: [caldom.org/docs/](https://caldom.org/docs/)
 
-# Basic Syntax
-
 ## Hello World!
 Use it as a chainable DOM traverser and a manipulator, a lightweight jQuery alternative.
 
