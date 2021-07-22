@@ -5,6 +5,8 @@ An agnostic, reactive & minimalist (3kb) JavaScript UI library with direct acces
 Instead of pulling you into a library-specific magical world, CalDOM let you **fully access the DOM** directly while keeping the **reactivity** 💥.
 So you could take full advantage of native APIs & mix it with other libraries to gain superior performance & flexibility in the development process.
 
+A 2-in-1 virtual-DOM & no-virtual-DOM approach if you will.
+
 In essence, CalDOM is just a wrapper around the native Node/Element. The overall performance drop is about 0.04x compared to vanilla/pure JavaScript. This is based on averaged unit level benchmarks in handling single & multiple-element instances: [View Benchmark Results](https://caldom.org/benchmark/) against Vanilla JS, jQuery, React JS, Vue &amp; more.
 
 Official site: [caldom.org](https://www.caldom.org)
