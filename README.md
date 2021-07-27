@@ -175,6 +175,58 @@ setTimeout( () =>
 , 1000);
 ```
 
+## Supercharge Native Web Components
+CalDOM integrates seamlessly with [Web Components](https://developer.mozilla.org/en-US/docs/Web/Web_Components).
+Use CalDOM to create stateful & reactive Web Components. It also accepts web components as inputs.
+
+```js
+class CustomElement extends HTMLElement{
+    connectedCallback(){
+        
+        let title = _().react(
+            { msg: "Hello World!" },
+            {
+                render: state => 
+                    _( "+h2", state.msg )
+            }
+        );
+
+        // Appending H2 as a child, keeping root intact
+        // this = <custom-element>
+        _( this, title );
+
+        //Just a shortcut to access state easily
+        this.state = title.state;
+    }
+    
+    doSomething(){
+        alert("Cool Eh!");
+    }
+}
+
+//Registering custom element.
+customElements.define("custom-element", CustomElement);
+
+let hello = document.createElement("custom-element");
+document.getElementById("output-5-1").appendChild( hello );
+
+hello.state.msg = "I'm a Reactive, Stateful & Native Web Component. 🔥";
+
+//Creating a new web component using CalDOM
+_("#output-5-1").prepend( _("+custom-element") )
+```
+
+You can use these custom elements in HTML code natively as usual.
+Note that browser support for [Web Components](https://caniuse.com/custom-elementsv1) is relatively new (95%). The future looks bright! 🔮
+
+```html
+<custom-element onclick="doSomething()">
+</custom-element>
+
+<custom-element onclick="state.msg = 'Native Web Components are awesome! ✌️'">
+</custom-element>
+```
+
 ## You can even make jQuery reactive
 Basic building box of CalDOM is just native Node/Element. Thus, making it compatible with almost any DOM library on the web.
 
